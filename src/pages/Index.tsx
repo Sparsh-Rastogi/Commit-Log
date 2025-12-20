@@ -101,6 +101,10 @@ const Index = () => {
     setTrackers(prev => [...prev, newTracker]);
   };
 
+  const handleDeleteTracker = (trackerId: string) => {
+    setTrackers(prev => prev.filter(t => t.id !== trackerId));
+  };
+
   return (
     <div className="flex min-h-screen bg-background">
       <Sidebar
@@ -118,6 +122,7 @@ const Index = () => {
         onTaskToggle={handleTaskToggle}
         onTrackerClick={handleTrackerClick}
         onPushEntry={handlePushEntry}
+        onDeleteTracker={handleDeleteTracker}
         onAddTask={() => setNewTaskModalOpen(true)}
         onAddTracker={() => setNewTrackerModalOpen(true)}
       />

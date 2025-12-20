@@ -1,19 +1,24 @@
 import { UserProfile } from '@/types';
 import { User } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 
 interface ProfileSectionProps {
   user: UserProfile;
 }
 
 export function ProfileSection({ user }: ProfileSectionProps) {
+  const navigate = useNavigate();
   const xpPercentage = (user.xp / user.maxXp) * 100;
 
   return (
     <div className="p-4 border-b border-sidebar-border">
       <div className="flex items-center gap-3">
-        {/* Avatar */}
-        <div className="relative">
-          <div className="w-10 h-10 rounded-full bg-surface-2 flex items-center justify-center ring-2 ring-commit/30">
+        {/* Avatar - clickable for auth */}
+        <button 
+          onClick={() => navigate('/auth')}
+          className="relative group focus:outline-none focus:ring-2 focus:ring-commit/30 rounded-full"
+        >
+          <div className="w-10 h-10 rounded-full bg-surface-2 flex items-center justify-center ring-2 ring-commit/30 transition-all group-hover:ring-commit/60">
             {user.avatarUrl ? (
               <img 
                 src={user.avatarUrl} 
@@ -21,12 +26,12 @@ export function ProfileSection({ user }: ProfileSectionProps) {
                 className="w-full h-full rounded-full object-cover"
               />
             ) : (
-              <User className="w-5 h-5 text-muted-foreground" />
+              <User className="w-5 h-5 text-muted-foreground group-hover:text-commit transition-colors" />
             )}
           </div>
           {/* Online indicator */}
           <div className="absolute bottom-0 right-0 w-3 h-3 bg-commit rounded-full border-2 border-sidebar" />
-        </div>
+        </button>
 
         {/* User info */}
         <div className="flex-1 min-w-0">
