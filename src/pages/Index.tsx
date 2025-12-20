@@ -1,12 +1,79 @@
-// Update this page (the content is just a fallback if you fail to update the page)
+import { useState } from 'react';
+import { Sidebar } from '@/components/Sidebar';
+import { MainContent } from '@/components/MainContent';
+import { NewCommitModal } from '@/components/NewCommitModal';
+import { TrackerAnalyticsModal } from '@/components/TrackerAnalyticsModal';
+import { mockUser, mockBranches, mockTasks, mockTrackers } from '@/data/mockData';
+import { Branch, Task, Tracker } from '@/types';
 
 const Index = () => {
+  const [branches, setBranches] = useState<Branch[]>(mockBranches);
+  const [tasks, setTasks] = useState<Task[]>(mockTasks);
+  const [trackers] = useState<Tracker[]>(mockTrackers);
+  const [currentBranchId, setCurrentBranchId] = useState('main');
+  const [newCommitModalOpen, setNewCommitModalOpen] = useState(false);
+  const [selectedTracker, setSelectedTracker] = useState<Tracker | null>(null);
+  const [trackerModalOpen, setTrackerModalOpen] = useState(false);
+
+  const currentBranch = branches.find(b => b.id === currentBranchId) || branches[0];
+
+  const handleBranchSelect = (branchId: string) => {
+    setCurrentBranchId(branchId);
+  };
+
+  const handleNewCommit = (name: string, description: string) => {
+    const newBranch: Branch = {
+      id: `commit-${Date.now()}`,
+      name: `feature/${name}`,
+      description,
+      isMain: false,
+      createdAt: new Date(),
+    };
+    setBranches([...branches, newBranch]);
+  };
+
+  const handleTaskToggle = (taskId: string) => {
+    setTasks(tasks.map(task => 
+      task.id === taskId 
+        ? { ...task, completed: !task.completed }
+        : task
+    ));
+  };
+
+  const handleTrackerClick = (tracker: Tracker) => {
+    setSelectedTracker(tracker);
+    setTrackerModalOpen(true);
+  };
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background">
-      <div className="text-center">
-        <h1 className="mb-4 text-4xl font-bold">Welcome to Your Blank App</h1>
-        <p className="text-xl text-muted-foreground">Start building your amazing project here!</p>
-      </div>
+    <div className="flex min-h-screen bg-background">
+      <Sidebar
+        user={mockUser}
+        branches={branches}
+        currentBranchId={currentBranchId}
+        onBranchSelect={handleBranchSelect}
+        onNewCommit={() => setNewCommitModalOpen(true)}
+      />
+      
+      <MainContent
+        currentBranch={currentBranch}
+        tasks={tasks}
+        trackers={trackers}
+        onTaskToggle={handleTaskToggle}
+        onTrackerClick={handleTrackerClick}
+      />
+
+      <NewCommitModal
+        open={newCommitModalOpen}
+        onOpenChange={setNewCommitModalOpen}
+        onCreateCommit={handleNewCommit}
+      />
+
+      <TrackerAnalyticsModal
+        tracker={selectedTracker}
+        open={trackerModalOpen}
+        onOpenChange={setTrackerModalOpen}
+      />
     </div>
   );
 };
