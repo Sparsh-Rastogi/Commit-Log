@@ -1,10 +1,10 @@
 import { useState } from 'react';
-import { Sidebar } from '@/frontend/components/Sidebar';
-import { MainContent } from '@/frontend/components/MainContent';
-import { NewCommitModal } from '@/frontend/components/NewCommitModal';
-import { TrackerAnalyticsModal } from '@/frontend/components/TrackerAnalyticsModal';
-import { mockUser, mockBranches, mockTasks, mockTrackers } from '@/frontend/data/mockData';
-import { Branch, Task, Tracker } from '@/frontend/types';
+import { Sidebar } from '@/components/Sidebar';
+import { MainContent } from '@/components/MainContent';
+import { NewCommitModal } from '@/components/NewCommitModal';
+import { TrackerAnalyticsModal } from '@/components/TrackerAnalyticsModal';
+import { mockUser, mockBranches, mockTasks, mockTrackers } from '@/data/mockData';
+import { Branch, Task, Tracker } from '@/types';
 
 const Index = () => {
   const [branches, setBranches] = useState<Branch[]>(mockBranches);

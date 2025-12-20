@@ -1,4 +1,4 @@
-import { UserProfile } from '@/frontend/types';
+import { UserProfile } from '@/types';
 import { User } from 'lucide-react';
 
 interface ProfileSectionProps {

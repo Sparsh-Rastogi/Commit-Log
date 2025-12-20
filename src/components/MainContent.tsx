@@ -1,4 +1,4 @@
-import { Branch, Task, Tracker } from '@/frontend/types';
+import { Branch, Task, Tracker } from '@/types';
 import { TaskCard } from './TaskCard';
 import { TrackerCard } from './TrackerCard';
 import { GitBranch, CheckSquare, Activity } from 'lucide-react';

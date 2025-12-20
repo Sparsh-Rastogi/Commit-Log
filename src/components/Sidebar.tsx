@@ -1,4 +1,4 @@
-import { Branch, UserProfile } from '@/frontend/types';
+import { Branch, UserProfile } from '@/types';
 import { ProfileSection } from './ProfileSection';
 import { BranchList } from './BranchList';
 import { Button } from '@/components/ui/button';

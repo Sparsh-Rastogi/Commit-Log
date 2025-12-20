@@ -1,4 +1,4 @@
-import { Task } from '@/frontend/types';
+import { Task } from '@/types';
 import { Checkbox } from '@/components/ui/checkbox';
 import { cn } from '@/lib/utils';
 import { Zap, Flame, Target, Star, Clock } from 'lucide-react';

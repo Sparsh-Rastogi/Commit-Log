@@ -1,4 +1,4 @@
-import { Branch, Task, Tracker, UserProfile } from '@/frontend/types';
+import { Branch, Task, Tracker, UserProfile } from '@/types';
 
 export const mockUser: UserProfile = {
   username: 'devuser',
