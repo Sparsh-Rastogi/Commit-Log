@@ -1,15 +1,16 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { Sidebar } from '@/components/Sidebar';
 import { MainContent } from '@/components/MainContent';
 import { NewCommitModal } from '@/components/NewCommitModal';
 import { TrackerAnalyticsModal } from '@/components/TrackerAnalyticsModal';
 import { mockUser, mockBranches, mockTasks, mockTrackers } from '@/data/mockData';
 import { Branch, Task, Tracker } from '@/types';
+import { pushEntry } from '@/domains/services/tracker.service';
 
 const Index = () => {
   const [branches, setBranches] = useState<Branch[]>(mockBranches);
   const [tasks, setTasks] = useState<Task[]>(mockTasks);
-  const [trackers] = useState<Tracker[]>(mockTrackers);
+  const [trackers, setTrackers] = useState<Tracker[]>(mockTrackers);
   const [currentBranchId, setCurrentBranchId] = useState('main');
   const [newCommitModalOpen, setNewCommitModalOpen] = useState(false);
   const [selectedTracker, setSelectedTracker] = useState<Tracker | null>(null);
@@ -45,6 +46,21 @@ const Index = () => {
     setTrackerModalOpen(true);
   };
 
+  const handlePushEntry = useCallback((trackerId: string, value: number) => {
+    setTrackers(prev => prev.map(tracker => 
+      tracker.id === trackerId 
+        ? pushEntry(tracker, value)
+        : tracker
+    ));
+    
+    // Update selected tracker if it's currently open
+    setSelectedTracker(prev => 
+      prev?.id === trackerId 
+        ? trackers.find(t => t.id === trackerId) ?? prev
+        : prev
+    );
+  }, [trackers]);
+
   return (
     <div className="flex min-h-screen bg-background">
       <Sidebar
@@ -61,6 +77,7 @@ const Index = () => {
         trackers={trackers}
         onTaskToggle={handleTaskToggle}
         onTrackerClick={handleTrackerClick}
+        onPushEntry={handlePushEntry}
       />
 
       <NewCommitModal

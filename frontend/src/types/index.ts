@@ -1,28 +1,8 @@
-export interface Branch {
-  id: string;
-  name: string;
-  description?: string;
-  isMain: boolean;
-  createdAt: Date;
-}
-
-export interface Task {
-  id: string;
-  title: string;
-  completed: boolean;
-  weight: number;
-  modifiers: string[];
-  branchId: string;
-}
-
-export interface Tracker {
-  id: string;
-  name: string;
-  value: number;
-  displayMode: 'counter' | 'progress' | 'timer';
-  status: 'active' | 'paused' | 'completed';
-  branchId: string;
-}
+// Re-export domain models for app usage
+export type { Branch } from '@/domains/models/branch';
+export type { Task } from '@/domains/models/task';
+export type { Tracker, TrackerMode, TrackerDisplay } from '@/domains/models/tracker';
+export type { TrackerEntry } from '@/domains/models/entry';
 
 export interface UserProfile {
   username: string;

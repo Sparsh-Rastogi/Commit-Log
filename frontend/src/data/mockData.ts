@@ -1,4 +1,4 @@
-import { Branch, Task, Tracker, UserProfile } from '@/types';
+import { Branch, Task, Tracker, UserProfile, TrackerEntry } from '@/types';
 
 export const mockUser: UserProfile = {
   username: 'devuser',
@@ -49,24 +49,99 @@ export const mockTasks: Task[] = [
   { id: 't8', title: 'No screens after 10pm', completed: true, weight: 2, modifiers: ['challenge'], branchId: 'commit-3' },
 ];
 
+// Helper to generate random entries over past days
+function generateEntries(count: number, maxValue: number, daysBack: number = 90): TrackerEntry[] {
+  const entries: TrackerEntry[] = [];
+  const now = Date.now();
+  
+  for (let i = 0; i < count; i++) {
+    const daysAgo = Math.floor(Math.random() * daysBack);
+    const date = new Date(now - daysAgo * 24 * 60 * 60 * 1000);
+    entries.push({
+      value: Math.floor(Math.random() * maxValue) + 1,
+      createdAt: date,
+    });
+  }
+  
+  return entries.sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
+}
+
 export const mockTrackers: Tracker[] = [
-  { id: 'tr1', name: 'Commits today', value: 7, displayMode: 'counter', status: 'active', branchId: 'main' },
-  { id: 'tr2', name: 'Weekly streak', value: 5, displayMode: 'counter', status: 'active', branchId: 'main' },
-  { id: 'tr3', name: 'Morning score', value: 85, displayMode: 'progress', status: 'active', branchId: 'commit-1' },
-  { id: 'tr4', name: 'Focus time', value: 240, displayMode: 'timer', status: 'active', branchId: 'commit-2' },
-  { id: 'tr5', name: 'Sleep quality', value: 72, displayMode: 'progress', status: 'active', branchId: 'commit-3' },
+  { 
+    id: 'tr1', 
+    name: 'Commits today', 
+    branchId: 'main',
+    weight: 0, // analytics-only, no score contribution
+    mode: 'sum',
+    displayMode: 'sum',
+    entries: generateEntries(45, 10),
+    status: 'active',
+  },
+  { 
+    id: 'tr2', 
+    name: 'Weekly streak', 
+    branchId: 'main',
+    weight: 0, // analytics-only
+    mode: 'value',
+    displayMode: 'max',
+    entries: generateEntries(30, 7),
+    status: 'active',
+  },
+  { 
+    id: 'tr3', 
+    name: 'Morning score', 
+    branchId: 'commit-1',
+    weight: 3,
+    mode: 'sum',
+    target: 100,
+    displayMode: 'average',
+    entries: generateEntries(20, 15),
+    status: 'active',
+  },
+  { 
+    id: 'tr4', 
+    name: 'Focus time', 
+    branchId: 'commit-2',
+    weight: 5,
+    mode: 'sum',
+    target: 480, // 8 hours in minutes
+    displayMode: 'sum',
+    entries: generateEntries(25, 60),
+    status: 'active',
+  },
+  { 
+    id: 'tr5', 
+    name: 'Sleep quality', 
+    branchId: 'commit-3',
+    weight: 2,
+    mode: 'value',
+    target: 90,
+    displayMode: 'average',
+    entries: generateEntries(30, 100),
+    status: 'active',
+  },
+  {
+    id: 'tr6',
+    name: 'Caffeine intake',
+    branchId: 'commit-3',
+    weight: 0, // analytics only
+    mode: 'sum',
+    threshold: 500, // mg limit - when hit, tracker dies
+    displayMode: 'sum',
+    entries: generateEntries(15, 100),
+    status: 'active',
+  },
 ];
 
-// Mock heatmap data (52 weeks x 7 days)
-export const generateHeatmapData = (): number[][] => {
+// Generate heatmap data from tracker entries
+export function generateHeatmapData(): number[][] {
   const data: number[][] = [];
   for (let week = 0; week < 52; week++) {
     const weekData: number[] = [];
     for (let day = 0; day < 7; day++) {
-      // Random contribution level 0-4
       weekData.push(Math.floor(Math.random() * 5));
     }
     data.push(weekData);
   }
   return data;
-};
+}

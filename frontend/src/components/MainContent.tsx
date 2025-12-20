@@ -2,6 +2,8 @@ import { Branch, Task, Tracker } from '@/types';
 import { TaskCard } from './TaskCard';
 import { TrackerCard } from './TrackerCard';
 import { GitBranch, CheckSquare, Activity } from 'lucide-react';
+import { useMemo } from 'react';
+import { branchScore } from '@/domains/services/score.service';
 
 interface MainContentProps {
   currentBranch: Branch;
@@ -9,6 +11,7 @@ interface MainContentProps {
   trackers: Tracker[];
   onTaskToggle: (id: string) => void;
   onTrackerClick: (tracker: Tracker) => void;
+  onPushEntry?: (trackerId: string, value: number) => void;
 }
 
 export function MainContent({ 
@@ -16,10 +19,18 @@ export function MainContent({
   tasks, 
   trackers, 
   onTaskToggle, 
-  onTrackerClick 
+  onTrackerClick,
+  onPushEntry,
 }: MainContentProps) {
   const branchTasks = tasks.filter(t => t.branchId === currentBranch.id);
   const branchTrackers = trackers.filter(t => t.branchId === currentBranch.id);
+
+  // Calculate dynamic branch score using domain service
+  const score = useMemo(() => {
+    return branchScore(branchTasks, branchTrackers);
+  }, [branchTasks, branchTrackers]);
+
+  const scorePercent = Math.round(score * 100);
 
   return (
     <main className="flex-1 h-screen overflow-y-auto bg-background scrollbar-thin">
@@ -55,11 +66,14 @@ export function MainContent({
                 <div className="w-32 h-2 bg-surface-3 rounded-full overflow-hidden">
                   <div 
                     className="h-full bg-gradient-to-r from-commit to-xp rounded-full transition-all duration-500"
-                    style={{ width: '42%' }}
+                    style={{ width: `${scorePercent}%` }}
                   />
                 </div>
-                <span className="font-mono text-sm font-semibold text-commit">42%</span>
+                <span className="font-mono text-sm font-semibold text-commit">{scorePercent}%</span>
               </div>
+              <span className="text-[9px] text-muted-foreground">
+                {branchTasks.filter(t => t.completed).length}/{branchTasks.length} tasks · {branchTrackers.filter(t => t.weight > 0).length} scoring trackers
+              </span>
             </div>
           )}
         </div>
@@ -74,7 +88,7 @@ export function MainContent({
               Tasks
             </h2>
             <span className="ml-1 px-1.5 py-0.5 text-[10px] font-mono bg-surface-2 text-muted-foreground rounded">
-              {branchTasks.length}
+              {branchTasks.filter(t => t.completed).length}/{branchTasks.length}
             </span>
           </div>
 
@@ -115,6 +129,7 @@ export function MainContent({
                   key={tracker.id} 
                   tracker={tracker}
                   onClick={() => onTrackerClick(tracker)}
+                  onPushEntry={onPushEntry}
                 />
               ))}
             </div>
