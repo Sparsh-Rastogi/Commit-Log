@@ -1,7 +1,7 @@
-import { Tracker } from '@/types';
+import { Tracker } from '@/frontend/types';
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { ContributionHeatmap } from './ContributionHeatmap';
-import { generateHeatmapData } from '@/data/mockData';
+import { generateHeatmapData } from '@/frontend/data/mockData';
 import { useMemo } from 'react';
 import { TrendingUp, TrendingDown, Minus, BarChart3 } from 'lucide-react';
 
@@ -26,7 +26,7 @@ export function TrackerAnalyticsModal({ tracker, open, onOpenChange }: TrackerAn
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="bg-card border-border sm:max-w-2xl">
+      <DialogContent className="bg-card border-border sm:max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-foreground">
             <BarChart3 className="w-5 h-5 text-accent" />
@@ -56,11 +56,13 @@ export function TrackerAnalyticsModal({ tracker, open, onOpenChange }: TrackerAn
           </div>
 
           {/* Contribution Graph */}
-          <div className="p-4 bg-surface-1 rounded-lg border border-border">
+          <div className="p-4 bg-surface-1 rounded-lg border border-border overflow-hidden">
             <h3 className="text-sm font-medium text-foreground mb-4">
               Activity over the last year
             </h3>
-            <ContributionHeatmap data={heatmapData} />
+            <div className="overflow-x-auto">
+              <ContributionHeatmap data={heatmapData} />
+            </div>
           </div>
 
           {/* Additional placeholder stats */}
