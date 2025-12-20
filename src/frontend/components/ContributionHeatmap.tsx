@@ -47,7 +47,7 @@ export function ContributionHeatmap({ data }: ContributionHeatmapProps) {
         </div>
 
         {/* Heatmap grid */}
-        <div className="flex gap-[3px] flex-1 overflow-x-auto scrollbar-thin">
+        <div className="flex gap-[3px] min-w-max">
           {weeks.map((week, weekIndex) => (
             <div key={weekIndex} className="flex flex-col gap-[3px]">
               {week.map((level, dayIndex) => (

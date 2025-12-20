@@ -1,4 +1,4 @@
-import { Branch } from '@/types';
+import { Branch } from '@/frontend/types';
 import { GitBranch, GitCommit, ChevronRight } from 'lucide-react';
 import { cn } from '@/lib/utils';
 

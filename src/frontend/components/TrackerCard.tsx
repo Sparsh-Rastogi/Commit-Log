@@ -1,4 +1,4 @@
-import { Tracker } from '@/types';
+import { Tracker } from '@/frontend/types';
 import { cn } from '@/lib/utils';
 import { Hash, TrendingUp, Timer, Play, Pause, CheckCircle, Plus, BarChart3 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
