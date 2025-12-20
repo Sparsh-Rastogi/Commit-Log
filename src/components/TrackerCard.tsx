@@ -1,6 +1,6 @@
 import { Tracker } from '@/types';
 import { cn } from '@/lib/utils';
-import { Hash, TrendingUp, TrendingDown, Minus as MinusIcon, Timer, Play, CheckCircle, Plus, BarChart3 } from 'lucide-react';
+import { Hash, TrendingUp, TrendingDown, Play, CheckCircle, Plus, BarChart3, Trash2 } from 'lucide-react';
 import { Input } from '@/components/ui/input';
 import { Button } from '@/components/ui/button';
 import { trackerScore } from '@/domains/services/tracker.service';
@@ -11,6 +11,7 @@ interface TrackerCardProps {
   tracker: Tracker;
   onClick: () => void;
   onPushEntry?: (trackerId: string, value: number) => void;
+  onDelete?: (trackerId: string) => void;
 }
 
 const displayModeIcons: Record<string, React.ReactNode> = {
@@ -30,7 +31,7 @@ const statusColors: Record<string, string> = {
   dead: 'text-muted-foreground',
 };
 
-export function TrackerCard({ tracker, onClick, onPushEntry }: TrackerCardProps) {
+export function TrackerCard({ tracker, onClick, onPushEntry, onDelete }: TrackerCardProps) {
   // Calculate dynamic values from domain services
   const analytics = useMemo(() => trackerAnalytics(tracker), [tracker]);
   const score = useMemo(() => trackerScore(tracker), [tracker]);
@@ -67,6 +68,13 @@ export function TrackerCard({ tracker, onClick, onPushEntry }: TrackerCardProps)
     if (value > 0 && onPushEntry) {
       onPushEntry(tracker.id, value);
       input.value = '';
+    }
+  };
+
+  const handleDelete = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (onDelete) {
+      onDelete(tracker.id);
     }
   };
 
@@ -178,15 +186,25 @@ export function TrackerCard({ tracker, onClick, onPushEntry }: TrackerCardProps)
         </div>
       )}
 
-      <div className="mt-2 flex items-center gap-2">
-        <span className="text-[10px] font-mono uppercase text-muted-foreground bg-surface-2 px-1.5 py-0.5 rounded">
-          {tracker.mode}:{tracker.displayMode}
-        </span>
-        {contributesToScore && (
-          <span className="text-[10px] font-mono uppercase text-commit/70 bg-commit/10 px-1.5 py-0.5 rounded">
-            weight: {tracker.weight}
+      <div className="mt-2 flex items-center justify-between">
+        <div className="flex items-center gap-2">
+          <span className="text-[10px] font-mono uppercase text-muted-foreground bg-surface-2 px-1.5 py-0.5 rounded">
+            {tracker.mode}:{tracker.displayMode}
           </span>
-        )}
+          {contributesToScore && (
+            <span className="text-[10px] font-mono uppercase text-commit/70 bg-commit/10 px-1.5 py-0.5 rounded">
+              weight: {tracker.weight}
+            </span>
+          )}
+        </div>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="h-6 w-6 p-0 text-muted-foreground hover:text-destructive hover:bg-destructive/10"
+          onClick={handleDelete}
+        >
+          <Trash2 className="w-3.5 h-3.5" />
+        </Button>
       </div>
     </div>
   );

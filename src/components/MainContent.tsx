@@ -13,6 +13,7 @@ interface MainContentProps {
   onTaskToggle: (id: string) => void;
   onTrackerClick: (tracker: Tracker) => void;
   onPushEntry?: (trackerId: string, value: number) => void;
+  onDeleteTracker?: (trackerId: string) => void;
   onAddTask?: () => void;
   onAddTracker?: () => void;
 }
@@ -24,6 +25,7 @@ export function MainContent({
   onTaskToggle, 
   onTrackerClick,
   onPushEntry,
+  onDeleteTracker,
   onAddTask,
   onAddTracker,
 }: MainContentProps) {
@@ -157,6 +159,7 @@ export function MainContent({
                   tracker={tracker}
                   onClick={() => onTrackerClick(tracker)}
                   onPushEntry={onPushEntry}
+                  onDelete={onDeleteTracker}
                 />
               ))}
             </div>
