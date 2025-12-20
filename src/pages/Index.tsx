@@ -2,10 +2,13 @@ import { useState, useCallback } from 'react';
 import { Sidebar } from '@/components/Sidebar';
 import { MainContent } from '@/components/MainContent';
 import { NewCommitModal } from '@/components/NewCommitModal';
+import { NewTaskModal } from '@/components/NewTaskModal';
+import { NewTrackerModal } from '@/components/NewTrackerModal';
 import { TrackerAnalyticsModal } from '@/components/TrackerAnalyticsModal';
 import { mockUser, mockBranches, mockTasks, mockTrackers } from '@/data/mockData';
 import { Branch, Task, Tracker } from '@/types';
 import { pushEntry } from '@/domains/services/tracker.service';
+import { TrackerMode, TrackerDisplay } from '@/domains/models/tracker';
 
 const Index = () => {
   const [branches, setBranches] = useState<Branch[]>(mockBranches);
@@ -13,6 +16,8 @@ const Index = () => {
   const [trackers, setTrackers] = useState<Tracker[]>(mockTrackers);
   const [currentBranchId, setCurrentBranchId] = useState('main');
   const [newCommitModalOpen, setNewCommitModalOpen] = useState(false);
+  const [newTaskModalOpen, setNewTaskModalOpen] = useState(false);
+  const [newTrackerModalOpen, setNewTrackerModalOpen] = useState(false);
   const [selectedTracker, setSelectedTracker] = useState<Tracker | null>(null);
   const [trackerModalOpen, setTrackerModalOpen] = useState(false);
 
@@ -61,6 +66,41 @@ const Index = () => {
     );
   }, [trackers]);
 
+  const handleCreateTask = (title: string, weight: number, modifiers: string[]) => {
+    const newTask: Task = {
+      id: `task-${Date.now()}`,
+      title,
+      completed: false,
+      weight,
+      modifiers,
+      branchId: currentBranchId,
+    };
+    setTasks(prev => [...prev, newTask]);
+  };
+
+  const handleCreateTracker = (data: {
+    name: string;
+    mode: TrackerMode;
+    displayMode: TrackerDisplay;
+    weight: number;
+    target?: number;
+    threshold?: number;
+  }) => {
+    const newTracker: Tracker = {
+      id: `tracker-${Date.now()}`,
+      name: data.name,
+      branchId: currentBranchId,
+      weight: data.target ? data.weight : 0,
+      mode: data.mode,
+      displayMode: data.displayMode,
+      target: data.target,
+      threshold: data.threshold,
+      entries: [],
+      status: 'active',
+    };
+    setTrackers(prev => [...prev, newTracker]);
+  };
+
   return (
     <div className="flex min-h-screen bg-background">
       <Sidebar
@@ -78,12 +118,26 @@ const Index = () => {
         onTaskToggle={handleTaskToggle}
         onTrackerClick={handleTrackerClick}
         onPushEntry={handlePushEntry}
+        onAddTask={() => setNewTaskModalOpen(true)}
+        onAddTracker={() => setNewTrackerModalOpen(true)}
       />
 
       <NewCommitModal
         open={newCommitModalOpen}
         onOpenChange={setNewCommitModalOpen}
         onCreateCommit={handleNewCommit}
+      />
+
+      <NewTaskModal
+        open={newTaskModalOpen}
+        onOpenChange={setNewTaskModalOpen}
+        onCreateTask={handleCreateTask}
+      />
+
+      <NewTrackerModal
+        open={newTrackerModalOpen}
+        onOpenChange={setNewTrackerModalOpen}
+        onCreateTracker={handleCreateTracker}
       />
 
       <TrackerAnalyticsModal
