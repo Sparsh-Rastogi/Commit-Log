@@ -1,9 +1,10 @@
 import { Branch, Task, Tracker } from '@/types';
 import { TaskCard } from './TaskCard';
 import { TrackerCard } from './TrackerCard';
-import { GitBranch, CheckSquare, Activity } from 'lucide-react';
+import { GitBranch, CheckSquare, Activity, Plus } from 'lucide-react';
 import { useMemo } from 'react';
 import { branchScore } from '@/domains/services/score.service';
+import { Button } from '@/components/ui/button';
 
 interface MainContentProps {
   currentBranch: Branch;
@@ -12,6 +13,8 @@ interface MainContentProps {
   onTaskToggle: (id: string) => void;
   onTrackerClick: (tracker: Tracker) => void;
   onPushEntry?: (trackerId: string, value: number) => void;
+  onAddTask?: () => void;
+  onAddTracker?: () => void;
 }
 
 export function MainContent({ 
@@ -21,6 +24,8 @@ export function MainContent({
   onTaskToggle, 
   onTrackerClick,
   onPushEntry,
+  onAddTask,
+  onAddTracker,
 }: MainContentProps) {
   const branchTasks = tasks.filter(t => t.branchId === currentBranch.id);
   const branchTrackers = trackers.filter(t => t.branchId === currentBranch.id);
@@ -82,14 +87,25 @@ export function MainContent({
       <div className="p-6 space-y-8">
         {/* Tasks Section */}
         <section>
-          <div className="flex items-center gap-2 mb-4">
-            <CheckSquare className="w-4 h-4 text-muted-foreground" />
-            <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
-              Tasks
-            </h2>
-            <span className="ml-1 px-1.5 py-0.5 text-[10px] font-mono bg-surface-2 text-muted-foreground rounded">
-              {branchTasks.filter(t => t.completed).length}/{branchTasks.length}
-            </span>
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <CheckSquare className="w-4 h-4 text-muted-foreground" />
+              <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+                Tasks
+              </h2>
+              <span className="ml-1 px-1.5 py-0.5 text-[10px] font-mono bg-surface-2 text-muted-foreground rounded">
+                {branchTasks.filter(t => t.completed).length}/{branchTasks.length}
+              </span>
+            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onAddTask}
+              className="h-7 px-2 text-xs gap-1 text-muted-foreground hover:text-commit hover:bg-commit/10"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              Add Task
+            </Button>
           </div>
 
           {branchTasks.length > 0 ? (
@@ -112,14 +128,25 @@ export function MainContent({
 
         {/* Trackers Section */}
         <section>
-          <div className="flex items-center gap-2 mb-4">
-            <Activity className="w-4 h-4 text-muted-foreground" />
-            <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
-              Trackers
-            </h2>
-            <span className="ml-1 px-1.5 py-0.5 text-[10px] font-mono bg-surface-2 text-muted-foreground rounded">
-              {branchTrackers.length}
-            </span>
+          <div className="flex items-center justify-between mb-4">
+            <div className="flex items-center gap-2">
+              <Activity className="w-4 h-4 text-muted-foreground" />
+              <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
+                Trackers
+              </h2>
+              <span className="ml-1 px-1.5 py-0.5 text-[10px] font-mono bg-surface-2 text-muted-foreground rounded">
+                {branchTrackers.length}
+              </span>
+            </div>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onAddTracker}
+              className="h-7 px-2 text-xs gap-1 text-muted-foreground hover:text-accent hover:bg-accent/10"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              Add Tracker
+            </Button>
           </div>
 
           {branchTrackers.length > 0 ? (
