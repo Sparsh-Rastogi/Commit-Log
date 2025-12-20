@@ -25,22 +25,44 @@ export function MainContent({
     <main className="flex-1 h-screen overflow-y-auto bg-background scrollbar-thin">
       {/* Header */}
       <header className="sticky top-0 z-10 bg-background/95 backdrop-blur border-b border-border px-6 py-4">
-        <div className="flex items-center gap-3">
-          <GitBranch className="w-5 h-5 text-commit" />
-          <h1 className="text-lg font-semibold font-mono text-foreground">
-            {currentBranch.name}
-          </h1>
-          {currentBranch.isMain && (
-            <span className="px-2 py-0.5 text-[10px] font-semibold uppercase bg-commit/20 text-commit rounded-full">
-              default
-            </span>
+        <div className="flex items-center justify-between">
+          <div>
+            <div className="flex items-center gap-3">
+              <GitBranch className="w-5 h-5 text-commit" />
+              <h1 className="text-lg font-semibold font-mono text-foreground">
+                {currentBranch.name}
+              </h1>
+              {currentBranch.isMain && (
+                <span className="px-2 py-0.5 text-[10px] font-semibold uppercase bg-commit/20 text-commit rounded-full">
+                  default
+                </span>
+              )}
+            </div>
+            {currentBranch.description && (
+              <p className="mt-1 text-sm text-muted-foreground">
+                {currentBranch.description}
+              </p>
+            )}
+          </div>
+
+          {/* Commit Score - only for non-main branches */}
+          {!currentBranch.isMain && (
+            <div className="flex flex-col items-end gap-1">
+              <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                Commit Progress
+              </span>
+              <div className="flex items-center gap-2">
+                <div className="w-32 h-2 bg-surface-3 rounded-full overflow-hidden">
+                  <div 
+                    className="h-full bg-gradient-to-r from-commit to-xp rounded-full transition-all duration-500"
+                    style={{ width: '42%' }}
+                  />
+                </div>
+                <span className="font-mono text-sm font-semibold text-commit">42%</span>
+              </div>
+            </div>
           )}
         </div>
-        {currentBranch.description && (
-          <p className="mt-1 text-sm text-muted-foreground">
-            {currentBranch.description}
-          </p>
-        )}
       </header>
 
       <div className="p-6 space-y-8">
