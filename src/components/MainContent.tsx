@@ -16,6 +16,8 @@ interface MainContentProps {
   onDeleteTracker?: (trackerId: string) => void;
   onAddTask?: () => void;
   onAddTracker?: () => void;
+  onPostponeTask?: (id: string, newDate: Date) => void;
+  onRemoveTaskDate?: (id: string) => void;
 }
 
 export function MainContent({ 
@@ -28,6 +30,8 @@ export function MainContent({
   onDeleteTracker,
   onAddTask,
   onAddTracker,
+  onPostponeTask,
+  onRemoveTaskDate,
 }: MainContentProps) {
   const branchTasks = tasks.filter(t => t.branchId === currentBranch.id);
   const branchTrackers = trackers.filter(t => t.branchId === currentBranch.id);
@@ -117,6 +121,8 @@ export function MainContent({
                   key={task.id} 
                   task={task} 
                   onToggle={onTaskToggle}
+                  onPostpone={onPostponeTask}
+                  onRemoveDate={onRemoveTaskDate}
                 />
               ))}
             </div>

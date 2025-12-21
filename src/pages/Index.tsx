@@ -66,16 +66,30 @@ const Index = () => {
     );
   }, [trackers]);
 
-  const handleCreateTask = (title: string, weight: number, modifiers: string[]) => {
+  const handleCreateTask = (taskData: Omit<Task, 'id' | 'completed' | 'branchId'>) => {
     const newTask: Task = {
+      ...taskData,
       id: `task-${Date.now()}`,
-      title,
       completed: false,
-      weight,
-      modifiers,
       branchId: currentBranchId,
     };
     setTasks(prev => [...prev, newTask]);
+  };
+
+  const handlePostponeTask = (taskId: string, newDate: Date) => {
+    setTasks(prev => prev.map(task => 
+      task.id === taskId 
+        ? { ...task, completed: false, timeMode: 'scheduled' as const, scheduledDate: newDate }
+        : task
+    ));
+  };
+
+  const handleRemoveTaskDate = (taskId: string) => {
+    setTasks(prev => prev.map(task => 
+      task.id === taskId 
+        ? { ...task, timeMode: 'none' as const, scheduledDate: undefined, startDate: undefined, endDate: undefined }
+        : task
+    ));
   };
 
   const handleCreateTracker = (data: {
@@ -125,6 +139,8 @@ const Index = () => {
         onDeleteTracker={handleDeleteTracker}
         onAddTask={() => setNewTaskModalOpen(true)}
         onAddTracker={() => setNewTrackerModalOpen(true)}
+        onPostponeTask={handlePostponeTask}
+        onRemoveTaskDate={handleRemoveTaskDate}
       />
 
       <NewCommitModal

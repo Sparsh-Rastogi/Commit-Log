@@ -1,8 +1,16 @@
 import { useMemo } from 'react';
 import { cn } from '@/lib/utils';
 
+interface HeatmapCell {
+  date: string;
+  value: number;
+  level: number;
+}
+
 interface ContributionHeatmapProps {
   data: number[][];
+  onCellClick?: (date: string, value: number) => void;
+  interactive?: boolean;
 }
 
 const levelColors = [
@@ -16,8 +24,26 @@ const levelColors = [
 const dayLabels = ['', 'Mon', '', 'Wed', '', 'Fri', ''];
 const monthLabels = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
-export function ContributionHeatmap({ data }: ContributionHeatmapProps) {
+export function ContributionHeatmap({ data, onCellClick, interactive = false }: ContributionHeatmapProps) {
   const weeks = useMemo(() => data, [data]);
+
+  // Generate dates for each cell
+  const cellDates = useMemo(() => {
+    const dates: string[][] = [];
+    const now = new Date();
+    
+    for (let week = 51; week >= 0; week--) {
+      const weekDates: string[] = [];
+      for (let day = 0; day < 7; day++) {
+        const date = new Date(now);
+        date.setDate(date.getDate() - (week * 7 + (6 - day)));
+        weekDates.push(date.toISOString().split('T')[0]);
+      }
+      dates.push(weekDates);
+    }
+    
+    return dates;
+  }, []);
 
   return (
     <div className="space-y-2">
@@ -50,16 +76,21 @@ export function ContributionHeatmap({ data }: ContributionHeatmapProps) {
         <div className="flex gap-[3px] flex-1 overflow-x-auto scrollbar-thin">
           {weeks.map((week, weekIndex) => (
             <div key={weekIndex} className="flex flex-col gap-[3px]">
-              {week.map((level, dayIndex) => (
-                <div
-                  key={`${weekIndex}-${dayIndex}`}
-                  className={cn(
-                    "w-[10px] h-[10px] rounded-sm transition-colors duration-200",
-                    levelColors[level] || levelColors[0]
-                  )}
-                  title={`${level} contributions`}
-                />
-              ))}
+              {week.map((level, dayIndex) => {
+                const dateKey = cellDates[weekIndex]?.[dayIndex] || '';
+                return (
+                  <div
+                    key={`${weekIndex}-${dayIndex}`}
+                    onClick={() => interactive && onCellClick?.(dateKey, level)}
+                    className={cn(
+                      "w-[10px] h-[10px] rounded-sm transition-all duration-200",
+                      levelColors[level] || levelColors[0],
+                      interactive && "cursor-pointer hover:ring-2 hover:ring-accent hover:ring-offset-1 hover:ring-offset-background"
+                    )}
+                    title={`${dateKey}: ${level} contributions`}
+                  />
+                );
+              })}
             </div>
           ))}
         </div>
