@@ -25,6 +25,8 @@ urlpatterns = [
 
     # Task APIs
     path("api/tasks/", include("tasks.urls")),
+    # Tracker APIs
+    path("api/trackers/", include("trackers.urls")),
     # Branch APIs
-    # path("api/branches/", include("branches.urls")),
+    path("api/branches/", include("branches.urls")),
 ]

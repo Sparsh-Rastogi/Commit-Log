@@ -1,75 +1,96 @@
-import { create } from 'zustand';
-
+import { create } from "zustand";
+import { apiFetch } from "@/lib/api";
+import { getCookie } from "@/lib/utils";
 export interface User {
-  id: string;
+  id: number;
   username: string;
-  email: string;
+  email?: string;
   level: number;
   xp: number;
-  maxXp: number;
 }
 
 interface AuthState {
   user: User | null;
   isLoading: boolean;
   isAuthenticated: boolean;
-  
-  // Actions
-  login: (email: string, password: string) => Promise<void>;
+
+  login: (username: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
   register: (email: string, password: string, username: string) => Promise<void>;
   checkAuth: () => Promise<void>;
   setUser: (user: User | null) => void;
 }
 
-// TODO: Replace with real API calls
-const mockUser: User = {
-  id: 'user-1',
-  username: 'devuser',
-  email: 'dev@example.com',
-  level: 12,
-  xp: 2450,
-  maxXp: 3000,
-};
-
 export const useAuthStore = create<AuthState>((set) => ({
   user: null,
   isLoading: true,
   isAuthenticated: false,
 
-  login: async (email: string, password: string) => {
-    set({ isLoading: true });
-    // TODO: Implement real API call
-    await new Promise(resolve => setTimeout(resolve, 500));
-    console.log('Login placeholder:', { email, password });
-    set({ user: mockUser, isAuthenticated: true, isLoading: false });
+  // 🔑 Called once on app load
+  checkAuth: async () => {
+    try {
+      const user = await apiFetch<User>("/auth/me/");
+      set({
+        user,
+        isAuthenticated: true,
+        isLoading: false,
+      });
+    } catch {
+      set({
+        user: null,
+        isAuthenticated: false,
+        isLoading: false,
+      });
+    }
   },
+
+  login: async (username: string, password: string) => {
+    set({ isLoading: true });
+    try {
+        // 1. Perform Login
+        // Ensure apiFetch includes { credentials: 'include' } in its internal config
+        await apiFetch("/auth/login/", {
+            method: "POST",
+            body: JSON.stringify({ username, password }),
+            headers: { 'X-CSRFToken': getCookie('csrftoken') } // Essential for Django
+        });
+
+        // 2. Fetch User Data (only if login succeeded)
+        const user = await apiFetch<User>("/auth/me/");
+
+        set({
+            user,
+            isAuthenticated: true,
+            isLoading: false,
+        });
+    } catch (error) {
+        set({ isLoading: false, isAuthenticated: false });
+        console.error("Login failed:", error);
+        // Handle error (e.g., show a toast notification)
+    }
+},
 
   logout: async () => {
     set({ isLoading: true });
-    // TODO: Implement real API call
-    await new Promise(resolve => setTimeout(resolve, 300));
-    set({ user: null, isAuthenticated: false, isLoading: false });
+
+    await apiFetch("/auth/logout/", { method: "POST" });
+
+    set({
+      user: null,
+      isAuthenticated: false,
+      isLoading: false,
+    });
   },
 
-  register: async (email: string, password: string, username: string) => {
-    set({ isLoading: true });
-    // TODO: Implement real API call
-    await new Promise(resolve => setTimeout(resolve, 500));
-    console.log('Register placeholder:', { email, password, username });
-    const newUser: User = { ...mockUser, email, username };
-    set({ user: newUser, isAuthenticated: true, isLoading: false });
-  },
-
-  checkAuth: async () => {
-    set({ isLoading: true });
-    // TODO: Check session/token validity
-    await new Promise(resolve => setTimeout(resolve, 300));
-    // For now, auto-login with mock user
-    set({ user: mockUser, isAuthenticated: true, isLoading: false });
+  // Optional (can be implemented later)
+  register: async () => {
+    throw new Error("Register not implemented yet");
   },
 
   setUser: (user) => {
-    set({ user, isAuthenticated: !!user });
+    set({
+      user,
+      isAuthenticated: !!user,
+    });
   },
 }));

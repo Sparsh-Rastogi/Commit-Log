@@ -17,7 +17,7 @@ const Auth = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (isLogin) {
-      await login(email, password);
+      await login(username, password);
     } else {
       await register(email, password, username);
     }
@@ -98,17 +98,17 @@ const Auth = () => {
           <form onSubmit={handleSubmit} className="space-y-5">
             {!isLogin && (
               <div className="space-y-2">
-                <Label htmlFor="username" className="text-sm font-medium text-foreground">
-                  Username
+                <Label htmlFor="email" className="text-sm font-medium text-foreground">
+                  Email
                 </Label>
                 <div className="relative">
                   <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                   <Input
-                    id="username"
-                    type="text"
-                    placeholder="devlife"
-                    value={username}
-                    onChange={(e) => setUsername(e.target.value)}
+                    id="email"
+                    type="email"
+                    placeholder="you@example.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
                     className="pl-10 h-11 bg-surface-2 border-border focus:border-commit focus:ring-commit/20"
                   />
                 </div>
@@ -116,17 +116,17 @@ const Auth = () => {
             )}
 
             <div className="space-y-2">
-              <Label htmlFor="email" className="text-sm font-medium text-foreground">
-                Email
+              <Label htmlFor="username" className="text-sm font-medium text-foreground">
+                Username
               </Label>
               <div className="relative">
                 <Mail className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
                 <Input
-                  id="email"
-                  type="email"
-                  placeholder="you@example.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  id="username"
+                  type="text"
+                  placeholder="devlife"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
                   className="pl-10 h-11 bg-surface-2 border-border focus:border-commit focus:ring-commit/20"
                 />
               </div>
