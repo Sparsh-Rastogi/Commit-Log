@@ -51,6 +51,15 @@ const Index = () => {
 
   const currentBranch = getCurrentBranch() || branches[0];
 
+  // Show loading state while branches are being fetched
+  if (!currentBranch) {
+    return (
+      <div className="flex min-h-screen bg-background items-center justify-center">
+        <div className="text-muted-foreground">Loading...</div>
+      </div>
+    );
+  }
+
   const handleBranchSelect = (branchId: string) => {
     selectBranch(branchId);
   };
