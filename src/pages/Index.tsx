@@ -1,49 +1,66 @@
-import { useState, useCallback } from 'react';
+import { useEffect, useState } from 'react';
 import { Sidebar } from '@/components/Sidebar';
 import { MainContent } from '@/components/MainContent';
 import { NewCommitModal } from '@/components/NewCommitModal';
 import { NewTaskModal } from '@/components/NewTaskModal';
 import { NewTrackerModal } from '@/components/NewTrackerModal';
 import { TrackerAnalyticsModal } from '@/components/TrackerAnalyticsModal';
-import { mockUser, mockBranches, mockTasks, mockTrackers } from '@/data/mockData';
-import { Branch, Task, Tracker } from '@/types';
-import { pushEntry } from '@/domains/services/tracker.service';
+import { useAuthStore, useBranchStore, useTaskStore, useTrackerStore } from '@/stores';
+import { Task, Tracker } from '@/types';
 import { TrackerMode, TrackerDisplay } from '@/domains/models/tracker';
 
 const Index = () => {
-  const [branches, setBranches] = useState<Branch[]>(mockBranches);
-  const [tasks, setTasks] = useState<Task[]>(mockTasks);
-  const [trackers, setTrackers] = useState<Tracker[]>(mockTrackers);
-  const [currentBranchId, setCurrentBranchId] = useState('main');
+  // Auth store
+  const { user, checkAuth } = useAuthStore();
+  
+  // Branch store
+  const { branches, currentBranchId, selectBranch, fetchBranches, createBranch, getCurrentBranch } = useBranchStore();
+  
+  // Task store
+  const { tasks, fetchTasks, createTask, toggleTask, postponeTask, removeTaskDate } = useTaskStore();
+  
+  // Tracker store
+  const { 
+    trackers, 
+    selectedTracker, 
+    fetchTrackers, 
+    createTracker, 
+    deleteTracker, 
+    pushEntry, 
+    setSelectedTracker 
+  } = useTrackerStore();
+
+  // Modal states
   const [newCommitModalOpen, setNewCommitModalOpen] = useState(false);
   const [newTaskModalOpen, setNewTaskModalOpen] = useState(false);
   const [newTrackerModalOpen, setNewTrackerModalOpen] = useState(false);
-  const [selectedTracker, setSelectedTracker] = useState<Tracker | null>(null);
   const [trackerModalOpen, setTrackerModalOpen] = useState(false);
 
-  const currentBranch = branches.find(b => b.id === currentBranchId) || branches[0];
+  // Initialize state on app load
+  useEffect(() => {
+    const initializeApp = async () => {
+      await Promise.all([
+        checkAuth(),
+        fetchBranches(),
+        fetchTasks(),
+        fetchTrackers(),
+      ]);
+    };
+    initializeApp();
+  }, [checkAuth, fetchBranches, fetchTasks, fetchTrackers]);
+
+  const currentBranch = getCurrentBranch() || branches[0];
 
   const handleBranchSelect = (branchId: string) => {
-    setCurrentBranchId(branchId);
+    selectBranch(branchId);
   };
 
-  const handleNewCommit = (name: string, description: string) => {
-    const newBranch: Branch = {
-      id: `commit-${Date.now()}`,
-      name: `feature/${name}`,
-      description,
-      isMain: false,
-      createdAt: new Date(),
-    };
-    setBranches([...branches, newBranch]);
+  const handleNewCommit = async (name: string, description: string) => {
+    await createBranch(name, description);
   };
 
   const handleTaskToggle = (taskId: string) => {
-    setTasks(tasks.map(task => 
-      task.id === taskId 
-        ? { ...task, completed: !task.completed }
-        : task
-    ));
+    toggleTask(taskId);
   };
 
   const handleTrackerClick = (tracker: Tracker) => {
@@ -51,48 +68,26 @@ const Index = () => {
     setTrackerModalOpen(true);
   };
 
-  const handlePushEntry = useCallback((trackerId: string, value: number) => {
-    setTrackers(prev => prev.map(tracker => 
-      tracker.id === trackerId 
-        ? pushEntry(tracker, value)
-        : tracker
-    ));
-    
-    // Update selected tracker if it's currently open
-    setSelectedTracker(prev => 
-      prev?.id === trackerId 
-        ? trackers.find(t => t.id === trackerId) ?? prev
-        : prev
-    );
-  }, [trackers]);
+  const handlePushEntry = (trackerId: string, value: number) => {
+    pushEntry(trackerId, value);
+  };
 
-  const handleCreateTask = (taskData: Omit<Task, 'id' | 'completed' | 'branchId'>) => {
-    const newTask: Task = {
+  const handleCreateTask = async (taskData: Omit<Task, 'id' | 'completed' | 'branchId'>) => {
+    await createTask({
       ...taskData,
-      id: `task-${Date.now()}`,
-      completed: false,
       branchId: currentBranchId,
-    };
-    setTasks(prev => [...prev, newTask]);
+    });
   };
 
   const handlePostponeTask = (taskId: string, newDate: Date) => {
-    setTasks(prev => prev.map(task => 
-      task.id === taskId 
-        ? { ...task, completed: false, timeMode: 'scheduled' as const, scheduledDate: newDate }
-        : task
-    ));
+    postponeTask(taskId, newDate);
   };
 
   const handleRemoveTaskDate = (taskId: string) => {
-    setTasks(prev => prev.map(task => 
-      task.id === taskId 
-        ? { ...task, timeMode: 'none' as const, scheduledDate: undefined, startDate: undefined, endDate: undefined }
-        : task
-    ));
+    removeTaskDate(taskId);
   };
 
-  const handleCreateTracker = (data: {
+  const handleCreateTracker = async (data: {
     name: string;
     mode: TrackerMode;
     displayMode: TrackerDisplay;
@@ -100,29 +95,33 @@ const Index = () => {
     target?: number;
     threshold?: number;
   }) => {
-    const newTracker: Tracker = {
-      id: `tracker-${Date.now()}`,
-      name: data.name,
+    await createTracker({
+      ...data,
       branchId: currentBranchId,
-      weight: data.target ? data.weight : 0,
-      mode: data.mode,
-      displayMode: data.displayMode,
-      target: data.target,
-      threshold: data.threshold,
-      entries: [],
-      status: 'active',
-    };
-    setTrackers(prev => [...prev, newTracker]);
+    });
   };
 
-  const handleDeleteTracker = (trackerId: string) => {
-    setTrackers(prev => prev.filter(t => t.id !== trackerId));
+  const handleDeleteTracker = async (trackerId: string) => {
+    await deleteTracker(trackerId);
+  };
+
+  // User profile for sidebar (from auth store)
+  const userProfile = user ? {
+    username: user.username,
+    level: user.level,
+    xp: user.xp,
+    maxXp: user.maxXp,
+  } : {
+    username: 'Guest',
+    level: 1,
+    xp: 0,
+    maxXp: 100,
   };
 
   return (
     <div className="flex min-h-screen bg-background">
       <Sidebar
-        user={mockUser}
+        user={userProfile}
         branches={branches}
         currentBranchId={currentBranchId}
         onBranchSelect={handleBranchSelect}

@@ -4,18 +4,23 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { GitBranch, Mail, Lock, User, ArrowLeft } from 'lucide-react';
+import { useAuthStore } from '@/stores';
 
 const Auth = () => {
   const navigate = useNavigate();
+  const { login, register, isLoading } = useAuthStore();
   const [isLogin, setIsLogin] = useState(true);
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [username, setUsername] = useState('');
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: Implement actual auth with Lovable Cloud
-    console.log(isLogin ? 'Login' : 'Signup', { email, password, username });
+    if (isLogin) {
+      await login(email, password);
+    } else {
+      await register(email, password, username);
+    }
     navigate('/');
   };
 
@@ -146,9 +151,10 @@ const Auth = () => {
 
             <Button 
               type="submit" 
+              disabled={isLoading}
               className="w-full h-11 bg-commit hover:bg-commit/90 text-primary-foreground font-medium"
             >
-              {isLogin ? 'Sign In' : 'Create Account'}
+              {isLoading ? 'Loading...' : isLogin ? 'Sign In' : 'Create Account'}
             </Button>
           </form>
 
