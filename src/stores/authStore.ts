@@ -19,6 +19,7 @@ interface AuthState {
   register: (email: string, password: string, username: string) => Promise<void>;
   checkAuth: () => Promise<void>;
   setUser: (user: User | null) => void;
+  updateXpAndLevel: (newXp: number, newLevel: number) => void;
 }
 
 export const useAuthStore = create<AuthState>((set) => ({
@@ -92,5 +93,17 @@ export const useAuthStore = create<AuthState>((set) => ({
       user,
       isAuthenticated: !!user,
     });
+  },
+
+  updateXpAndLevel: (newXp, newLevel) => {
+    set(state => ({
+      user: state.user ? {
+        ...state.user,
+        xp: newXp,
+        level: newLevel,
+        // Recalculate maxXp based on level (placeholder formula)
+        maxXp: 1000 + (newLevel * 200),
+      } : null,
+    }));
   },
 }));
