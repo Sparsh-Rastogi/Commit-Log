@@ -1,7 +1,7 @@
 import { Branch, Task, Tracker } from '@/types';
 import { TaskCard } from './TaskCard';
 import { TrackerCard } from './TrackerCard';
-import { GitBranch, CheckSquare, Activity, Plus } from 'lucide-react';
+import { GitBranch, CheckSquare, Activity, Plus, GitMerge, Loader2 } from 'lucide-react';
 import { useMemo } from 'react';
 import { branchScore } from '@/domains/services/score.service';
 import { Button } from '@/components/ui/button';
@@ -18,6 +18,8 @@ interface MainContentProps {
   onAddTracker?: () => void;
   onPostponeTask?: (id: string, newDate: Date) => void;
   onRemoveTaskDate?: (id: string) => void;
+  onPullCommit?: () => void;
+  isPulling?: boolean;
 }
 
 export function MainContent({ 
@@ -32,6 +34,8 @@ export function MainContent({
   onAddTracker,
   onPostponeTask,
   onRemoveTaskDate,
+  onPullCommit,
+  isPulling = false,
 }: MainContentProps) {
   const branchTasks = tasks.filter(t => t.branchId === currentBranch.id);
   const branchTrackers = trackers.filter(t => t.branchId === currentBranch.id);
@@ -67,24 +71,45 @@ export function MainContent({
             )}
           </div>
 
-          {/* Commit Score - only for non-main branches */}
+          {/* Commit Score and Pull Button - only for non-main branches */}
           {!currentBranch.isMain && (
-            <div className="flex flex-col items-end gap-1">
-              <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
-                Commit Progress
-              </span>
-              <div className="flex items-center gap-2">
-                <div className="w-32 h-2 bg-surface-3 rounded-full overflow-hidden">
-                  <div 
-                    className="h-full bg-gradient-to-r from-commit to-xp rounded-full transition-all duration-500"
-                    style={{ width: `${scorePercent}%` }}
-                  />
+            <div className="flex items-center gap-4">
+              <div className="flex flex-col items-end gap-1">
+                <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                  Commit Progress
+                </span>
+                <div className="flex items-center gap-2">
+                  <div className="w-32 h-2 bg-surface-3 rounded-full overflow-hidden">
+                    <div 
+                      className="h-full bg-gradient-to-r from-commit to-xp rounded-full transition-all duration-500"
+                      style={{ width: `${scorePercent}%` }}
+                    />
+                  </div>
+                  <span className="font-mono text-sm font-semibold text-commit">{scorePercent}%</span>
                 </div>
-                <span className="font-mono text-sm font-semibold text-commit">{scorePercent}%</span>
+                <span className="text-[9px] text-muted-foreground">
+                  {branchTasks.filter(t => t.completed).length}/{branchTasks.length} tasks · {branchTrackers.filter(t => t.weight > 0).length} scoring trackers
+                </span>
               </div>
-              <span className="text-[9px] text-muted-foreground">
-                {branchTasks.filter(t => t.completed).length}/{branchTasks.length} tasks · {branchTrackers.filter(t => t.weight > 0).length} scoring trackers
-              </span>
+              
+              {/* Pull Commit Button */}
+              <Button
+                onClick={onPullCommit}
+                disabled={isPulling}
+                className="bg-commit text-primary-foreground hover:bg-commit/90 gap-2 font-semibold"
+              >
+                {isPulling ? (
+                  <>
+                    <Loader2 className="w-4 h-4 animate-spin" />
+                    Pulling...
+                  </>
+                ) : (
+                  <>
+                    <GitMerge className="w-4 h-4" />
+                    Pull Commit
+                  </>
+                )}
+              </Button>
             </div>
           )}
         </div>
