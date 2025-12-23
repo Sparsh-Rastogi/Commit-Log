@@ -32,5 +32,7 @@ class MeView(APIView):
     permission_classes = [IsAuthenticated]
 
     def get(self, request):
+        print("MeView called by user:", request.user)
         serializer = UserSerializer(request.user)
+        print("Serialized data:", serializer.data)
         return Response(serializer.data)

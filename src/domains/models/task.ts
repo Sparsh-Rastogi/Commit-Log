@@ -8,7 +8,7 @@ export interface Task {
   completed: boolean;
   weight: number;
   modifiers: string[];
-  branchId: string;
+  branchId: number | null;
   
   // Time mode fields
   timeMode: TaskTimeMode;

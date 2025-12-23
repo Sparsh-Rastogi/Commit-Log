@@ -8,7 +8,8 @@ interface ProfileSectionProps {
 
 export function ProfileSection({ user }: ProfileSectionProps) {
   const navigate = useNavigate();
-  const xpPercentage = (user.xp / user.maxXp) * 100;
+  const nextLevelXp = 100 + (user.level - 1) * 50
+  const xpPercentage = (user.xp / nextLevelXp) * 100;
 
   return (
     <div className="p-4 border-b border-sidebar-border">
@@ -53,7 +54,7 @@ export function ProfileSection({ user }: ProfileSectionProps) {
               />
             </div>
             <span className="text-[10px] font-mono text-muted-foreground">
-              {user.xp}/{user.maxXp}
+              {user.xp}
             </span>
           </div>
         </div>

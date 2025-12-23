@@ -12,7 +12,7 @@ interface TrackerState {
   fetchTrackers: () => Promise<void>;
   createTracker: (data: {
     name: string;
-    branchId: string;
+    branchId: number | null;
     mode: TrackerMode;
     displayMode: TrackerDisplay;
     weight: number;
@@ -26,7 +26,7 @@ interface TrackerState {
   setTrackers: (trackers: Tracker[]) => void;
   
   // Selectors
-  getTrackersByBranch: (branchId: string) => Tracker[];
+  getTrackersByBranch: (branchId: number | null) => Tracker[];
 }
 
 // Helper to generate random entries
@@ -51,7 +51,7 @@ const mockTrackers: Tracker[] = [
   { 
     id: 'tr1', 
     name: 'Commits today', 
-    branchId: 'main',
+    branchId: null,
     weight: 0,
     mode: 'sum',
     displayMode: 'sum',
@@ -61,7 +61,7 @@ const mockTrackers: Tracker[] = [
   { 
     id: 'tr2', 
     name: 'Weekly streak', 
-    branchId: 'main',
+    branchId: null,
     weight: 0,
     mode: 'value',
     displayMode: 'max',
@@ -71,7 +71,7 @@ const mockTrackers: Tracker[] = [
   { 
     id: 'tr3', 
     name: 'Morning score', 
-    branchId: 'commit-1',
+    branchId: null,
     weight: 3,
     mode: 'sum',
     target: 100,
@@ -82,7 +82,7 @@ const mockTrackers: Tracker[] = [
   { 
     id: 'tr4', 
     name: 'Focus time', 
-    branchId: 'commit-2',
+    branchId: null,
     weight: 5,
     mode: 'sum',
     target: 480,
@@ -93,7 +93,7 @@ const mockTrackers: Tracker[] = [
   { 
     id: 'tr5', 
     name: 'Sleep quality', 
-    branchId: 'commit-3',
+    branchId: null,
     weight: 2,
     mode: 'value',
     target: 90,
@@ -104,7 +104,7 @@ const mockTrackers: Tracker[] = [
   {
     id: 'tr6',
     name: 'Caffeine intake',
-    branchId: 'commit-3',
+    branchId: null,
     weight: 0,
     mode: 'sum',
     threshold: 500,

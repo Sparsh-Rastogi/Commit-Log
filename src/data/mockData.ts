@@ -4,33 +4,32 @@ export const mockUser: UserProfile = {
   username: 'devuser',
   level: 12,
   xp: 2450,
-  maxXp: 3000,
 };
 
 export const mockBranches: Branch[] = [
   {
-    id: 'main',
+    id: null,
     name: 'main',
     description: 'Unassigned tasks and trackers',
     isMain: true,
     createdAt: new Date('2024-01-01'),
   },
   {
-    id: 'commit-1',
+    id: null,
     name: 'feature/morning-routine',
     description: 'Daily morning habits and exercises',
     isMain: false,
     createdAt: new Date('2024-01-15'),
   },
   {
-    id: 'commit-2',
+    id: null,
     name: 'feature/deep-work',
     description: 'Focused coding sessions',
     isMain: false,
     createdAt: new Date('2024-02-01'),
   },
   {
-    id: 'commit-3',
+    id: null,
     name: 'fix/sleep-schedule',
     description: 'Improving sleep quality',
     isMain: false,

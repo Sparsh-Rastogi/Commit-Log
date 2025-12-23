@@ -1,5 +1,6 @@
-import { create } from 'zustand';
-import { Branch } from '@/domains/models/branch';
+import { create } from "zustand";
+import { apiFetch } from "@/lib/api";
+import { Branch } from "@/domains/models/branch";
 
 export interface PullResponse {
   score: number;
@@ -11,57 +12,25 @@ export interface PullResponse {
 
 interface BranchState {
   branches: Branch[];
-  currentBranchId: string;
+  currentBranchId: number | null;
   isLoading: boolean;
   isPulling: boolean;
-  
+
   // Actions
-  selectBranch: (branchId: string) => void;
+  selectBranch: (branchId: number) => void;
   fetchBranches: () => Promise<void>;
   createBranch: (name: string, description: string) => Promise<Branch>;
-  deleteBranch: (branchId: string) => Promise<void>;
-  pullBranch: (branchId: string) => Promise<PullResponse>;
+  deleteBranch: (branchId: number) => Promise<void>;
+  pullBranch: (branchId: number) => Promise<PullResponse>;
   setBranches: (branches: Branch[]) => void;
-  
+
   // Selectors
   getCurrentBranch: () => Branch | undefined;
 }
 
-// TODO: Replace with real API calls
-const mockBranches: Branch[] = [
-  {
-    id: 'main',
-    name: 'main',
-    description: 'Unassigned tasks and trackers',
-    isMain: true,
-    createdAt: new Date('2024-01-01'),
-  },
-  {
-    id: 'commit-1',
-    name: 'feature/morning-routine',
-    description: 'Daily morning habits and exercises',
-    isMain: false,
-    createdAt: new Date('2024-01-15'),
-  },
-  {
-    id: 'commit-2',
-    name: 'feature/deep-work',
-    description: 'Focused coding sessions',
-    isMain: false,
-    createdAt: new Date('2024-02-01'),
-  },
-  {
-    id: 'commit-3',
-    name: 'fix/sleep-schedule',
-    description: 'Improving sleep quality',
-    isMain: false,
-    createdAt: new Date('2024-02-10'),
-  },
-];
-
 export const useBranchStore = create<BranchState>((set, get) => ({
   branches: [],
-  currentBranchId: 'main',
+  currentBranchId: null,
   isLoading: false,
   isPulling: false,
 
@@ -71,66 +40,79 @@ export const useBranchStore = create<BranchState>((set, get) => ({
 
   fetchBranches: async () => {
     set({ isLoading: true });
-    // TODO: Implement real API call
-    await new Promise(resolve => setTimeout(resolve, 300));
-    set({ branches: mockBranches, isLoading: false });
+    const branches = await apiFetch<Branch[]>("/branches/");
+    const mainBranch = branches.find(b => b.isMain);
+
+    set({
+      branches,
+      currentBranchId: mainBranch ? mainBranch.id : null,
+      isLoading: false,
+    });
   },
 
   createBranch: async (name, description) => {
-    // TODO: Implement real API call
-    await new Promise(resolve => setTimeout(resolve, 300));
-    const newBranch: Branch = {
-      id: `commit-${Date.now()}`,
-      name: `feature/${name}`,
-      description,
-      isMain: false,
-      createdAt: new Date(),
-    };
-    set(state => ({ branches: [...state.branches, newBranch] }));
+    const newBranch = await apiFetch<Branch>("/branches/", {
+      method: "POST",
+      body: JSON.stringify({ name, description }),
+    });
+
+    set(state => ({
+      branches: [...state.branches, newBranch],
+    }));
+
     return newBranch;
   },
 
   deleteBranch: async (branchId) => {
-    // TODO: Implement real API call
-    await new Promise(resolve => setTimeout(resolve, 300));
-    set(state => ({
-      branches: state.branches.filter(b => b.id !== branchId),
-      currentBranchId: state.currentBranchId === branchId ? 'main' : state.currentBranchId,
-    }));
+    await apiFetch(`/branches/${branchId}/`, {
+      method: "DELETE",
+    });
+
+    set(state => {
+      const remaining = state.branches.filter(b => b.id !== branchId);
+      const stillExists = remaining.some(b => b.id === state.currentBranchId);
+
+      return {
+        branches: remaining,
+        currentBranchId: stillExists
+          ? state.currentBranchId
+          : remaining.find(b => b.isMain)?.id ?? null,
+      };
+    });
   },
 
   pullBranch: async (branchId) => {
     set({ isPulling: true });
-    
-    // TODO: Replace with real API call to POST /api/branches/{branchId}/pull/
-    // The backend will calculate the score, XP, and level changes
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    
-    // Mock response from backend - ALL scoring logic is on backend
-    const mockResponse: PullResponse = {
-      score: Math.floor(Math.random() * 30) + 70, // 70-100%
-      xpEarned: Math.floor(Math.random() * 200) + 100, // 100-300 XP
-      newXp: 2650, // Updated total XP from backend
-      newLevel: 13, // Potentially updated level from backend
-      leveledUp: Math.random() > 0.7, // 30% chance of level up for demo
-    };
-    
-    // Remove the pulled branch and switch to main
-    set(state => ({
-      branches: state.branches.filter(b => b.id !== branchId),
-      currentBranchId: 'main',
-      isPulling: false,
-    }));
-    
-    return mockResponse;
+
+    const response = await apiFetch<PullResponse>(
+      `/branches/${branchId}/pull/`,
+      { method: "POST" }
+    );
+
+    set(state => {
+      const remaining = state.branches.filter(b => b.id !== branchId);
+      const mainBranch = remaining.find(b => b.isMain);
+
+      return {
+        branches: remaining,
+        currentBranchId: mainBranch ? mainBranch.id : null,
+        isPulling: false,
+      };
+    });
+
+    return response;
   },
 
   setBranches: (branches) => {
-    set({ branches });
+    const mainBranch = branches.find(b => b.isMain);
+    set({
+      branches,
+      currentBranchId: mainBranch ? mainBranch.id : null,
+    });
   },
 
   getCurrentBranch: () => {
-    const state = get();
-    return state.branches.find(b => b.id === state.currentBranchId);
+    const { branches, currentBranchId } = get();
+    return branches.find(b => b.id === currentBranchId);
   },
 }));

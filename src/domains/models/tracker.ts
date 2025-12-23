@@ -4,7 +4,7 @@ import { TrackerEntry } from './entry';
 export interface Tracker {
   id: string;
   name: string;
-  branchId: string;
+  branchId: number | null;
 
   weight: number;              // 0 if no target/threshold
   mode: TrackerMode;           // value | sum

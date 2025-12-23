@@ -16,20 +16,21 @@ interface TaskState {
   setTasks: (tasks: Task[]) => void;
   
   // Selectors
-  getTasksByBranch: (branchId: string) => Task[];
+  getTasksByBranch: (branchId: number | null) => Task[];
 }
 
 // TODO: Replace with real API calls
-const mockTasks: Task[] = [
-  { id: 't1', title: 'Review pull requests', completed: false, weight: 3, modifiers: ['priority'], branchId: 'main', timeMode: 'none' },
-  { id: 't2', title: 'Update documentation', completed: true, weight: 2, modifiers: [], branchId: 'main', timeMode: 'none' },
-  { id: 't3', title: 'Morning meditation', completed: false, weight: 1, modifiers: ['daily'], branchId: 'commit-1', timeMode: 'scheduled', scheduledDate: new Date() },
-  { id: 't4', title: 'Exercise routine', completed: true, weight: 2, modifiers: ['daily', 'streak'], branchId: 'commit-1', timeMode: 'recurring', recurringType: 'days', recurringDays: 1 },
-  { id: 't5', title: 'Deep work session', completed: false, weight: 5, modifiers: ['focus'], branchId: 'commit-2', timeMode: 'scheduled', scheduledDate: new Date(Date.now() + 86400000) },
-  { id: 't6', title: 'Code review', completed: false, weight: 3, modifiers: [], branchId: 'commit-2', timeMode: 'none' },
-  { id: 't7', title: 'Wind down routine', completed: false, weight: 1, modifiers: [], branchId: 'commit-3', timeMode: 'period', startDate: new Date(), endDate: new Date(Date.now() + 604800000) },
-  { id: 't8', title: 'No screens after 10pm', completed: true, weight: 2, modifiers: ['challenge'], branchId: 'commit-3', timeMode: 'recurring', recurringType: 'weekend' },
-];
+const mockTasks: Task[] = []
+// const mockTasks: Task[] = [
+//   { id: 't1', title: 'Review pull requests', completed: false, weight: 3, modifiers: ['priority'], branchId: 'main', timeMode: 'none' },
+//   { id: 't2', title: 'Update documentation', completed: true, weight: 2, modifiers: [], branchId: 'main', timeMode: 'none' },
+//   { id: 't3', title: 'Morning meditation', completed: false, weight: 1, modifiers: ['daily'], branchId: 'commit-1', timeMode: 'scheduled', scheduledDate: new Date() },
+//   { id: 't4', title: 'Exercise routine', completed: true, weight: 2, modifiers: ['daily', 'streak'], branchId: 'commit-1', timeMode: 'recurring', recurringType: 'days', recurringDays: 1 },
+//   { id: 't5', title: 'Deep work session', completed: false, weight: 5, modifiers: ['focus'], branchId: 'commit-2', timeMode: 'scheduled', scheduledDate: new Date(Date.now() + 86400000) },
+//   { id: 't6', title: 'Code review', completed: false, weight: 3, modifiers: [], branchId: 'commit-2', timeMode: 'none' },
+//   { id: 't7', title: 'Wind down routine', completed: false, weight: 1, modifiers: [], branchId: 'commit-3', timeMode: 'period', startDate: new Date(), endDate: new Date(Date.now() + 604800000) },
+//   { id: 't8', title: 'No screens after 10pm', completed: true, weight: 2, modifiers: ['challenge'], branchId: 'commit-3', timeMode: 'recurring', recurringType: 'weekend' },
+// ];
 
 export const useTaskStore = create<TaskState>((set, get) => ({
   tasks: [],

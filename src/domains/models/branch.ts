@@ -1,5 +1,5 @@
 export interface Branch {
-  id: string;
+  id: number | null;
   name: string;
   description?: string;
   isMain: boolean;

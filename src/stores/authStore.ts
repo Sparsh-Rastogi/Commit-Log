@@ -53,7 +53,7 @@ export const useAuthStore = create<AuthState>((set) => ({
         await apiFetch("/auth/login/", {
             method: "POST",
             body: JSON.stringify({ username, password }),
-            headers: { 'X-CSRFToken': getCookie('csrftoken') } // Essential for Django
+            // headers: { 'X-CSRFToken': getCookie('csrftoken') } // Essential for Django
         });
 
         // 2. Fetch User Data (only if login succeeded)

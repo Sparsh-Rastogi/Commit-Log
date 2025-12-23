@@ -9,5 +9,4 @@ export interface UserProfile {
   avatarUrl?: string;
   level: number;
   xp: number;
-  maxXp: number;
 }
