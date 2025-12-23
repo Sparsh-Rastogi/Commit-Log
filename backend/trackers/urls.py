@@ -1,14 +1,16 @@
 from django.urls import path
 from .views import (
     TrackerListCreateView,
-    TrackerPushView,
-    TrackerAnalyticsView,
-    TrackerHeatmapView,
+    push_entry,
+    tracker_entries,
+    tracker_analytics,
+    tracker_heatmap,
 )
 
 urlpatterns = [
-    path("branch/<int:branch_id>/", TrackerListCreateView.as_view()),
-    path("<int:tracker_id>/push/", TrackerPushView.as_view()),
-    path("<int:tracker_id>/analytics/", TrackerAnalyticsView.as_view()),
-    path("<int:tracker_id>/heatmap/", TrackerHeatmapView.as_view()),
+    path("", TrackerListCreateView.as_view()),
+    path("<int:tracker_id>/push/", push_entry),
+    path("<int:tracker_id>/entries/", tracker_entries),
+    path("<int:tracker_id>/analytics/", tracker_analytics),
+    path("<int:tracker_id>/heatmap/", tracker_heatmap),
 ]

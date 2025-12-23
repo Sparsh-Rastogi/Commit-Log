@@ -1,97 +1,111 @@
 from rest_framework.views import APIView
-from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
-from django.shortcuts import get_object_or_404
+from rest_framework.response import Response
+from rest_framework import status
 
-from .models import Tracker, TrackerEntry
+from .models import Tracker
 from .serializers import TrackerSerializer
+from .serializers import TrackerEntrySerializer
 from branches.models import Branch
-from django.db.models import Avg, Max, Min, Sum
-from collections import defaultdict
-from datetime import timedelta
-from django.utils import timezone
 
 
 class TrackerListCreateView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def get(self, request, branch_id):
-        trackers = Tracker.objects.filter(branch__id=branch_id, branch__owner=request.user)
-        serializer = TrackerSerializer(trackers, many=True)
-        return Response(serializer.data)
+    def get(self, request):
+        branch_id = request.query_params.get("branch")
+        trackers = Tracker.objects.filter(branch__owner=request.user)
 
-    def post(self, request, branch_id):
-        branch = get_object_or_404(Branch, id=branch_id, owner=request.user)
+        if branch_id:
+            trackers = trackers.filter(branch_id=branch_id)
+
+        return Response(TrackerSerializer(trackers, many=True).data)
+
+    def post(self, request):
         serializer = TrackerSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        serializer.save(branch=branch)
-        return Response(serializer.data, status=201)
 
-class TrackerPushView(APIView):
-    permission_classes = [IsAuthenticated]
-
-    def post(self, request, tracker_id):
-        tracker = get_object_or_404(
-            Tracker,
-            id=tracker_id,
-            branch__owner=request.user,
-            is_active=True
+        branch = Branch.objects.get(
+            id=serializer.validated_data["branch"].id,
+            owner=request.user,
         )
 
-        value = float(request.data.get("value", 0))
+        tracker = serializer.save(branch=branch)
+        return Response(TrackerSerializer(tracker).data, status=201)
 
-        TrackerEntry.objects.create(tracker=tracker, value=value)
+from rest_framework.decorators import api_view, permission_classes
+from .models import TrackerEntry
+from .services import get_tracker_current_value
 
-        # Threshold logic
-        if tracker.target_type == "THRESHOLD":
-            total = sum(e.value for e in tracker.entries.all())
-            if total >= tracker.target_value:
-                tracker.is_active = False
-                tracker.weight = 0
-                tracker.save()
+@api_view(["POST"])
+@permission_classes([IsAuthenticated])
+def push_entry(request, tracker_id):
+    tracker = Tracker.objects.get(
+        id=tracker_id,
+        branch__owner=request.user,
+        is_active=True,
+    )
 
-        return Response({"detail": "Entry added"})
+    value = request.data.get("value")
+    if value is None:
+        return Response({"error": "value required"}, status=400)
 
+    entry = TrackerEntry.objects.create(
+        tracker=tracker,
+        value=value,
+    )
 
+    # Handle threshold death
+    if tracker.target_type == "THRESHOLD":
+        current = get_tracker_current_value(tracker)
+        if current >= tracker.target_value:
+            tracker.is_active = False
+            tracker.save()
 
-class TrackerAnalyticsView(APIView):
-    permission_classes = [IsAuthenticated]
+    return Response({
+        "entry": TrackerEntrySerializer(entry).data,
+        "is_active": tracker.is_active,
+    }, status=201)
 
-    def get(self, request, tracker_id):
-        tracker = get_object_or_404(
-            Tracker,
-            id=tracker_id,
-            branch__owner=request.user
-        )
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def tracker_entries(request, tracker_id):
+    entries = TrackerEntry.objects.filter(
+        tracker_id=tracker_id,
+        tracker__branch__owner=request.user,
+    ).order_by("-timestamp")
 
-        entries = tracker.entries.all()
+    return Response(TrackerEntrySerializer(entries, many=True).data)
 
-        data = {
-            "sum": entries.aggregate(Sum("value"))["value__sum"] or 0,
-            "max": entries.aggregate(Max("value"))["value__max"] or 0,
-            "min": entries.aggregate(Min("value"))["value__min"] or 0,
-            "avg": entries.aggregate(Avg("value"))["value__avg"] or 0,
-        }
+from django.db.models import Avg, Max, Min
 
-        return Response(data)
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def tracker_analytics(request, tracker_id):
+    qs = TrackerEntry.objects.filter(
+        tracker_id=tracker_id,
+        tracker__branch__owner=request.user,
+    )
 
+    return Response({
+        "max": qs.aggregate(Max("value"))["value__max"],
+        "min": qs.aggregate(Min("value"))["value__min"],
+        "avg": qs.aggregate(Avg("value"))["value__avg"],
+    })
 
+from django.db.models.functions import TruncDate
+from django.db.models import Sum
 
-class TrackerHeatmapView(APIView):
-    permission_classes = [IsAuthenticated]
+@api_view(["GET"])
+@permission_classes([IsAuthenticated])
+def tracker_heatmap(request, tracker_id):
+    data = (
+        TrackerEntry.objects
+        .filter(tracker_id=tracker_id, tracker__branch__owner=request.user)
+        .annotate(day=TruncDate("timestamp"))
+        .values("day")
+        .annotate(total=Sum("value"))
+        .order_by("day")
+    )
 
-    def get(self, request, tracker_id):
-        tracker = get_object_or_404(
-            Tracker,
-            id=tracker_id,
-            branch__owner=request.user
-        )
-
-        heatmap = defaultdict(int)
-
-        for entry in tracker.entries.all():
-            day = entry.timestamp.date().isoformat()
-            heatmap[day] += entry.value
-
-        return Response(heatmap)
-
+    return Response(list(data))

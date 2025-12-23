@@ -89,14 +89,18 @@ const Index = () => {
   useEffect(() => {
     const initialize = async () => {
       await checkAuth();      // must complete first
+      console.log("Auth checked");
       await fetchBranches();
-      await fetchTasks();
-      await fetchTrackers();
+      console.log(getCurrentBranch());
+      console.log("Branches fetched");
+      // await fetchTasks();
+      // await fetchTrackers();
     };
     initialize();
   }, []);
 
   const currentBranch = getCurrentBranch();
+  console.log("Current Branch:", currentBranch);
 
   if (!currentBranch) {
     return (
@@ -165,7 +169,7 @@ const Index = () => {
      Pull Commit Flow
   ======================= */
   const handlePullCommitClick = () => {
-    if (currentBranch.isMain) {
+    if (currentBranch.is_main) {
       toast({
         title: "Cannot pull main branch",
         description: "Main branch cannot be finalized",

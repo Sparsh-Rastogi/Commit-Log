@@ -76,7 +76,7 @@ export const useBranchStore = create<BranchState>((set, get) => ({
         branches: remaining,
         currentBranchId: stillExists
           ? state.currentBranchId
-          : remaining.find(b => b.isMain)?.id ?? null,
+          : remaining.find(b => b.is_main)?.id ?? null,
       };
     });
   },
@@ -91,7 +91,7 @@ export const useBranchStore = create<BranchState>((set, get) => ({
 
     set(state => {
       const remaining = state.branches.filter(b => b.id !== branchId);
-      const mainBranch = remaining.find(b => b.isMain);
+      const mainBranch = remaining.find(b => b.is_main);
 
       return {
         branches: remaining,
@@ -104,7 +104,7 @@ export const useBranchStore = create<BranchState>((set, get) => ({
   },
 
   setBranches: (branches) => {
-    const mainBranch = branches.find(b => b.isMain);
+    const mainBranch = branches.find(b => b.is_main);
     set({
       branches,
       currentBranchId: mainBranch ? mainBranch.id : null,
@@ -113,6 +113,8 @@ export const useBranchStore = create<BranchState>((set, get) => ({
 
   getCurrentBranch: () => {
     const { branches, currentBranchId } = get();
+    console.log(branches);
+    if(currentBranchId === null) return branches.find(b => b.is_main);
     return branches.find(b => b.id === currentBranchId);
   },
 }));

@@ -67,6 +67,7 @@ export const useAuthStore = create<AuthState>((set) => ({
     } catch (error) {
         set({ isLoading: false, isAuthenticated: false });
         console.error("Login failed:", error);
+        alert("Login failed. Please check your credentials and try again.");
         // Handle error (e.g., show a toast notification)
     }
 },

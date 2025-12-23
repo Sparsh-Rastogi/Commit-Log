@@ -2,6 +2,6 @@ export interface Branch {
   id: number | null;
   name: string;
   description?: string;
-  isMain: boolean;
+  is_main: boolean;
   createdAt: Date;
 }

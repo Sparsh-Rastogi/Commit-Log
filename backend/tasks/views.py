@@ -1,65 +1,90 @@
 from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework.permissions import IsAuthenticated
-from django.shortcuts import get_object_or_404
+from rest_framework import status
 
 from .models import Task
 from .serializers import TaskSerializer
 from branches.models import Branch
+from rest_framework.decorators import api_view, permission_classes
 
 
 class TaskListCreateView(APIView):
     permission_classes = [IsAuthenticated]
 
-    def get(self, request, branch_id):
-        tasks = Task.objects.filter(branch__id=branch_id, branch__owner=request.user)
+    def get(self, request):
+        branch_id = request.query_params.get("branch")
+
+        tasks = Task.objects.filter(branch__owner=request.user)
+
+        if branch_id:
+            tasks = tasks.filter(branch_id=branch_id)
+
         serializer = TaskSerializer(tasks, many=True)
         return Response(serializer.data)
 
-    def post(self, request, branch_id):
-        branch = get_object_or_404(Branch, id=branch_id, owner=request.user)
+    def post(self, request):
         serializer = TaskSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        serializer.save(branch=branch)
-        return Response(serializer.data, status=201)
-class TaskToggleView(APIView):
-    permission_classes = [IsAuthenticated]
 
-    def post(self, request, task_id):
-        task = get_object_or_404(
-            Task,
-            id=task_id,
-            branch__owner=request.user
+        branch = Branch.objects.get(
+            id=serializer.validated_data["branch"].id,
+            owner=request.user,
         )
 
-        task.completed = not task.completed
-        task.save()
-
-        return Response({
-            "id": task.id,
-            "completed": task.completed
-        })
-from datetime import timedelta
-from django.utils import timezone
+        task = serializer.save(branch=branch)
+        return Response(TaskSerializer(task).data, status=status.HTTP_201_CREATED)
 
 
-class TaskPostponeView(APIView):
-    permission_classes = [IsAuthenticated]
+@api_view(["PATCH"])
+@permission_classes([IsAuthenticated])
+def toggle_task(request, task_id):
+    task = Task.objects.get(
+        id=task_id,
+        branch__owner=request.user,
+    )
 
-    def post(self, request, task_id):
-        task = get_object_or_404(Task, id=task_id, branch__owner=request.user)
+    task.completed = not task.completed
+    task.save()
 
-        option = request.data.get("option")
+    return Response({
+        "id": task.id,
+        "completed": task.completed,
+    })
 
-        if task.scheduled_at is None:
-            return Response({"error": "Task is not scheduled"}, status=400)
+@api_view(["PATCH"])
+@permission_classes([IsAuthenticated])
+def reschedule_task(request, task_id):
+    task = Task.objects.get(
+        id=task_id,
+        branch__owner=request.user,
+    )
 
-        if option == "tomorrow":
-            task.scheduled_at += timedelta(days=1)
-        elif option == "weekend":
-            task.scheduled_at += timedelta(days=7)
-        else:
-            return Response({"error": "Invalid postpone option"}, status=400)
+    task.time_type = "SCHEDULED"
+    task.scheduled_at = request.data.get("scheduled_at")
 
-        task.save()
-        return Response(TaskSerializer(task).data)
+    task.start_at = None
+    task.end_at = None
+    task.recurring_rule = None
+
+    task.save()
+
+    return Response(TaskSerializer(task).data)
+
+@api_view(["PATCH"])
+@permission_classes([IsAuthenticated])
+def remove_task_date(request, task_id):
+    task = Task.objects.get(
+        id=task_id,
+        branch__owner=request.user,
+    )
+
+    task.time_type = "NONE"
+    task.scheduled_at = None
+    task.start_at = None
+    task.end_at = None
+    task.recurring_rule = None
+
+    task.save()
+
+    return Response(TaskSerializer(task).data)

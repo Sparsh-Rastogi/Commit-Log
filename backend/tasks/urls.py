@@ -1,12 +1,14 @@
 from django.urls import path
 from .views import (
     TaskListCreateView,
-    TaskToggleView,
-    TaskPostponeView,
+    toggle_task,
+    reschedule_task,
+    remove_task_date,
 )
 
 urlpatterns = [
-    path("branch/<int:branch_id>/", TaskListCreateView.as_view()),
-    path("<int:task_id>/toggle/", TaskToggleView.as_view()),
-    path("<int:task_id>/postpone/", TaskPostponeView.as_view()),
+    path("", TaskListCreateView.as_view()),
+    path("<int:task_id>/toggle/", toggle_task),
+    path("<int:task_id>/reschedule/", reschedule_task),
+    path("<int:task_id>/remove-date/", remove_task_date),
 ]

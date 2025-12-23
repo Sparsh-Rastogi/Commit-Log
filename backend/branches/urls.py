@@ -1,6 +1,7 @@
 from django.urls import path
-from .views import BranchPullView
+from .views import BranchListCreateView, pull_branch
 
 urlpatterns = [
-    path("<int:branch_id>/pull/", BranchPullView.as_view()),
+    path("", BranchListCreateView.as_view()),
+    path("<int:branch_id>/pull/", pull_branch),
 ]
