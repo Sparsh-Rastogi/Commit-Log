@@ -4,11 +4,11 @@ import { cn } from '@/lib/utils';
 
 interface BranchListProps {
   branches: Branch[];
-  currentBranchId: string;
-  onBranchSelect: (branchId: string) => void;
+  currentBranchId: number | null;
+  onBranchSelect: (branchId: number | null) => void;
 
   /** Optional: precomputed branch scores (0–1) */
-  branchScores?: Record<string, number>;
+  branchScores?: Record<number, number>;
 }
 
 export function BranchList({
@@ -24,7 +24,7 @@ export function BranchList({
     <div className="flex-1 overflow-y-auto scrollbar-thin py-2">
 
       {/* Main Branch */}
-      {mainBranch && (
+      {mainBranch && mainBranch.id !== null && (
         <div className="px-2 mb-2">
           <button
             onClick={() => onBranchSelect(mainBranch.id)}
@@ -46,7 +46,7 @@ export function BranchList({
               {mainBranch.name}
             </span>
 
-            {branchScores[mainBranch.id] !== undefined && (
+            {mainBranch.id !== null && branchScores[mainBranch.id] !== undefined && (
               <span className="ml-auto text-xs text-muted-foreground">
                 {(branchScores[mainBranch.id] * 100).toFixed(0)}%
               </span>
@@ -69,7 +69,7 @@ export function BranchList({
           </div>
 
           <div className="space-y-0.5">
-            {commitBranches.map(branch => (
+            {commitBranches.filter(b => b.id !== null).map(branch => (
               <button
                 key={branch.id}
                 onClick={() => onBranchSelect(branch.id)}
@@ -93,7 +93,7 @@ export function BranchList({
                   {branch.name}
                 </span>
 
-                {branchScores[branch.id] !== undefined && (
+                {branch.id !== null && branchScores[branch.id] !== undefined && (
                   <span className="ml-auto text-xs text-muted-foreground">
                     {(branchScores[branch.id] * 100).toFixed(0)}%
                   </span>

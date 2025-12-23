@@ -7,8 +7,8 @@ import { Plus } from 'lucide-react';
 interface SidebarProps {
   user: UserProfile;
   branches: Branch[];
-  currentBranchId: string;
-  onBranchSelect: (branchId: string) => void;
+  currentBranchId: number | null;
+  onBranchSelect: (branchId: number | null) => void;
   onNewCommit: () => void;
 }
 

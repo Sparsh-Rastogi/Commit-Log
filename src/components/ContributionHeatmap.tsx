@@ -46,14 +46,14 @@ export function ContributionHeatmap({ data, onCellClick, interactive = false }: 
   }, []);
 
   return (
-    <div className="space-y-2">
+    <div className="space-y-1">
       {/* Month labels */}
-      <div className="flex pl-8">
-        <div className="flex gap-[3px] w-full">
+      <div className="flex pl-6">
+        <div className="flex gap-[2px] w-full">
           {monthLabels.map((month, i) => (
             <div 
               key={month} 
-              className="text-[10px] text-muted-foreground"
+              className="text-[8px] text-muted-foreground"
               style={{ width: `${100 / 12}%` }}
             >
               {month}
@@ -62,20 +62,20 @@ export function ContributionHeatmap({ data, onCellClick, interactive = false }: 
         </div>
       </div>
 
-      <div className="flex gap-1">
+      <div className="flex gap-0.5">
         {/* Day labels */}
-        <div className="flex flex-col gap-[3px] pr-2">
+        <div className="flex flex-col gap-[2px] pr-1">
           {dayLabels.map((day, i) => (
-            <div key={i} className="h-[10px] text-[9px] text-muted-foreground flex items-center">
+            <div key={i} className="h-[8px] text-[7px] text-muted-foreground flex items-center">
               {day}
             </div>
           ))}
         </div>
 
         {/* Heatmap grid */}
-        <div className="flex gap-[3px] flex-1 overflow-x-auto scrollbar-thin">
+        <div className="flex gap-[2px] flex-1 overflow-x-auto scrollbar-thin">
           {weeks.map((week, weekIndex) => (
-            <div key={weekIndex} className="flex flex-col gap-[3px]">
+            <div key={weekIndex} className="flex flex-col gap-[2px]">
               {week.map((level, dayIndex) => {
                 const dateKey = cellDates[weekIndex]?.[dayIndex] || '';
                 return (
@@ -83,7 +83,7 @@ export function ContributionHeatmap({ data, onCellClick, interactive = false }: 
                     key={`${weekIndex}-${dayIndex}`}
                     onClick={() => interactive && onCellClick?.(dateKey, level)}
                     className={cn(
-                      "w-[10px] h-[10px] rounded-sm transition-all duration-200",
+                      "w-[8px] h-[8px] rounded-[2px] transition-all duration-200",
                       levelColors[level] || levelColors[0],
                       interactive && "cursor-pointer hover:ring-2 hover:ring-accent hover:ring-offset-1 hover:ring-offset-background"
                     )}
@@ -97,15 +97,15 @@ export function ContributionHeatmap({ data, onCellClick, interactive = false }: 
       </div>
 
       {/* Legend */}
-      <div className="flex items-center justify-end gap-1 pt-2">
-        <span className="text-[10px] text-muted-foreground mr-1">Less</span>
+      <div className="flex items-center justify-end gap-0.5 pt-1">
+        <span className="text-[8px] text-muted-foreground mr-0.5">Less</span>
         {levelColors.map((color, i) => (
           <div
             key={i}
-            className={cn("w-[10px] h-[10px] rounded-sm", color)}
+            className={cn("w-[8px] h-[8px] rounded-[2px]", color)}
           />
         ))}
-        <span className="text-[10px] text-muted-foreground ml-1">More</span>
+        <span className="text-[8px] text-muted-foreground ml-0.5">More</span>
       </div>
     </div>
   );
