@@ -13,7 +13,7 @@ interface TrackerAnalyticsModalProps {
   tracker: Tracker | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  onPushEntry?: (trackerId: string, value: number) => void;
+  onPushEntry?: (trackerId: number, value: number) => void;
 }
 
 export function TrackerAnalyticsModal({ tracker, open, onOpenChange, onPushEntry }: TrackerAnalyticsModalProps) {

@@ -10,14 +10,14 @@ interface MainContentProps {
   currentBranch: Branch;
   tasks: Task[];
   trackers: Tracker[];
-  onTaskToggle: (id: string) => void;
+  onTaskToggle: (id: number) => void;
   onTrackerClick: (tracker: Tracker) => void;
-  onPushEntry?: (trackerId: string, value: number) => void;
-  onDeleteTracker?: (trackerId: string) => void;
+  onPushEntry?: (trackerId: number, value: number) => void;
+  onDeleteTracker?: (trackerId: number) => void;
   onAddTask?: () => void;
   onAddTracker?: () => void;
-  onPostponeTask?: (id: string, newDate: Date) => void;
-  onRemoveTaskDate?: (id: string) => void;
+  onPostponeTask?: (id: number, newDate: Date) => void;
+  onRemoveTaskDate?: (id: number) => void;
   onPullCommit?: () => void;
   isPulling?: boolean;
 }
@@ -58,7 +58,7 @@ export function MainContent({
               <h1 className="text-lg font-semibold font-mono text-foreground">
                 {currentBranch.name}
               </h1>
-              {currentBranch.isMain && (
+              {currentBranch.is_main && (
                 <span className="px-2 py-0.5 text-[10px] font-semibold uppercase bg-commit/20 text-commit rounded-full">
                   default
                 </span>
@@ -72,7 +72,7 @@ export function MainContent({
           </div>
 
           {/* Commit Score and Pull Button - only for non-main branches */}
-          {!currentBranch.isMain && (
+          {!currentBranch.is_main && (
             <div className="flex items-center gap-4">
               <div className="flex flex-col items-end gap-1">
                 <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">

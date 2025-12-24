@@ -11,41 +11,41 @@ export const mockBranches: Branch[] = [
     id: 1,
     name: 'main',
     description: 'Unassigned tasks and trackers',
-    isMain: true,
+    is_main: true,
     createdAt: new Date('2024-01-01'),
   },
   {
     id: 2,
     name: 'feature/morning-routine',
     description: 'Daily morning habits and exercises',
-    isMain: false,
+    is_main: false,
     createdAt: new Date('2024-01-15'),
   },
   {
     id: 3,
     name: 'feature/deep-work',
     description: 'Focused coding sessions',
-    isMain: false,
+    is_main: false,
     createdAt: new Date('2024-02-01'),
   },
   {
     id: 4,
     name: 'fix/sleep-schedule',
     description: 'Improving sleep quality',
-    isMain: false,
+    is_main: false,
     createdAt: new Date('2024-02-10'),
   },
 ];
 
 export const mockTasks: Task[] = [
-  { id: 't1', title: 'Review pull requests', completed: false, weight: 3, modifiers: ['priority'], branchId: 1, timeMode: 'none' },
-  { id: 't2', title: 'Update documentation', completed: true, weight: 2, modifiers: [], branchId: 1, timeMode: 'none' },
-  { id: 't3', title: 'Morning meditation', completed: false, weight: 1, modifiers: ['daily'], branchId: 2, timeMode: 'scheduled', scheduledDate: new Date() },
-  { id: 't4', title: 'Exercise routine', completed: true, weight: 2, modifiers: ['daily', 'streak'], branchId: 2, timeMode: 'recurring', recurringType: 'days', recurringDays: 1 },
-  { id: 't5', title: 'Deep work session', completed: false, weight: 5, modifiers: ['focus'], branchId: 3, timeMode: 'scheduled', scheduledDate: new Date(Date.now() + 86400000) },
-  { id: 't6', title: 'Code review', completed: false, weight: 3, modifiers: [], branchId: 3, timeMode: 'none' },
-  { id: 't7', title: 'Wind down routine', completed: false, weight: 1, modifiers: [], branchId: 4, timeMode: 'period', startDate: new Date(), endDate: new Date(Date.now() + 604800000) },
-  { id: 't8', title: 'No screens after 10pm', completed: true, weight: 2, modifiers: ['challenge'], branchId: 4, timeMode: 'recurring', recurringType: 'weekend' },
+  { id: 1, title: 'Review pull requests', completed: false, weight: 3, modifiers: ['priority'], branchId: 1, timeMode: 'none' },
+  { id: 2, title: 'Update documentation', completed: true, weight: 2, modifiers: [], branchId: 1, timeMode: 'none' },
+  { id: 3, title: 'Morning meditation', completed: false, weight: 1, modifiers: ['daily'], branchId: 2, timeMode: 'scheduled', scheduledDate: new Date() },
+  { id: 4, title: 'Exercise routine', completed: true, weight: 2, modifiers: ['daily', 'streak'], branchId: 2, timeMode: 'recurring', recurringType: 'days', recurringDays: 1 },
+  { id: 5, title: 'Deep work session', completed: false, weight: 5, modifiers: ['focus'], branchId: 3, timeMode: 'scheduled', scheduledDate: new Date(Date.now() + 86400000) },
+  { id: 6, title: 'Code review', completed: false, weight: 3, modifiers: [], branchId: 3, timeMode: 'none' },
+  { id: 7, title: 'Wind down routine', completed: false, weight: 1, modifiers: [], branchId: 4, timeMode: 'period', startDate: new Date(), endDate: new Date(Date.now() + 604800000) },
+  { id: 8, title: 'No screens after 10pm', completed: true, weight: 2, modifiers: ['challenge'], branchId: 4, timeMode: 'recurring', recurringType: 'weekend' },
 ];
 
 // Helper to generate random entries over past days
@@ -67,7 +67,7 @@ function generateEntries(count: number, maxValue: number, daysBack: number = 90)
 
 export const mockTrackers: Tracker[] = [
   { 
-    id: 'tr1', 
+    id: 1, 
     name: 'Commits today', 
     branchId: 1,
     weight: 0, // analytics-only, no score contribution
@@ -77,7 +77,7 @@ export const mockTrackers: Tracker[] = [
     status: 'active',
   },
   { 
-    id: 'tr2', 
+    id: 2, 
     name: 'Weekly streak', 
     branchId: 1,
     weight: 0, // analytics-only
@@ -87,7 +87,7 @@ export const mockTrackers: Tracker[] = [
     status: 'active',
   },
   { 
-    id: 'tr3', 
+    id: 3, 
     name: 'Morning score', 
     branchId: 2,
     weight: 3,
@@ -98,7 +98,7 @@ export const mockTrackers: Tracker[] = [
     status: 'active',
   },
   { 
-    id: 'tr4', 
+    id: 4, 
     name: 'Focus time', 
     branchId: 3,
     weight: 5,
@@ -109,7 +109,7 @@ export const mockTrackers: Tracker[] = [
     status: 'active',
   },
   { 
-    id: 'tr5', 
+    id: 5, 
     name: 'Sleep quality', 
     branchId: 4,
     weight: 2,
@@ -120,7 +120,7 @@ export const mockTrackers: Tracker[] = [
     status: 'active',
   },
   {
-    id: 'tr6',
+    id: 6,
     name: 'Caffeine intake',
     branchId: 4,
     weight: 0, // analytics only

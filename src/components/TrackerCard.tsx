@@ -10,8 +10,8 @@ import { useMemo } from 'react';
 interface TrackerCardProps {
   tracker: Tracker;
   onClick: () => void;
-  onPushEntry?: (trackerId: string, value: number) => void;
-  onDelete?: (trackerId: string) => void;
+  onPushEntry?: (trackerId: number, value: number) => void;
+  onDelete?: (trackerId: number) => void;
 }
 
 const displayModeIcons: Record<string, React.ReactNode> = {
