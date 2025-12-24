@@ -7,13 +7,13 @@ interface TaskState {
   isLoading: boolean;
 
   // Actions
-  fetchTasks: (branchId: number) => Promise<void>;
-  createTask: (taskData: Omit<Task, "id" | "completed">) => Promise<Task>;
+  fetchTasks: () => Promise<void>;
+  createTask: (taskData: Omit<Task, 'id' | 'completed'>) => Promise<Task>;
   updateTask: (taskId: number, updates: Partial<Task>) => Promise<void>;
   deleteTask: (taskId: number) => Promise<void>;
-  toggleTask: (taskId: number) => Promise<void>;
-  postponeTask: (taskId: number, newDate: Date) => Promise<void>;
-  removeTaskDate: (taskId: number) => Promise<void>;
+  toggleTask: (taskId: number) => void;
+  postponeTask: (taskId: number, newDate: Date) => void;
+  removeTaskDate: (taskId: number) => void;
   setTasks: (tasks: Task[]) => void;
 
   // Selectors
@@ -33,13 +33,15 @@ export const useTaskStore = create<TaskState>((set, get) => ({
 
   // 🔹 Create task
   createTask: async (taskData) => {
-    const task = await apiFetch<Task>("/tasks/", {
-      method: "POST",
-      body: JSON.stringify(taskData),
-    });
-
-    set(state => ({ tasks: [...state.tasks, task] }));
-    return task;
+    // TODO: Implement real API call
+    await new Promise(resolve => setTimeout(resolve, 300));
+    const newTask: Task = {
+      ...taskData,
+      id: `task-${Date.now()}`,
+      completed: false,
+    };
+    set(state => ({ tasks: [...state.tasks, newTask] }));
+    return newTask;
   },
 
   // 🔹 Generic update (future-proof)

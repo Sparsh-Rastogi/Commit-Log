@@ -13,9 +13,9 @@ import { format, isToday, isTomorrow, isPast, isFuture, addDays, startOfDay } fr
 
 interface TaskCardProps {
   task: Task;
-  onToggle: (id: string) => void;
-  onPostpone?: (id: string, newDate: Date) => void;
-  onRemoveDate?: (id: string) => void;
+  onToggle: (id: number) => void;
+  onPostpone?: (id: number, newDate: Date) => void;
+  onRemoveDate?: (id: number) => void;
 }
 
 const modifierIcons: Record<string, React.ReactNode> = {

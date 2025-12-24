@@ -19,9 +19,9 @@ interface TrackerState {
     target?: number;
     threshold?: number;
   }) => Promise<Tracker>;
-  updateTracker: (trackerId: string, updates: Partial<Tracker>) => Promise<void>;
-  deleteTracker: (trackerId: string) => Promise<void>;
-  pushEntry: (trackerId: string, value: number) => void;
+  updateTracker: (trackerId: number, updates: Partial<Tracker>) => Promise<void>;
+  deleteTracker: (trackerId: number) => Promise<void>;
+  pushEntry: (trackerId: number, value: number) => void;
   setSelectedTracker: (tracker: Tracker | null) => void;
   setTrackers: (trackers: Tracker[]) => void;
   
@@ -49,7 +49,7 @@ function generateEntries(count: number, maxValue: number, daysBack: number = 90)
 // TODO: Replace with real API calls
 const mockTrackers: Tracker[] = [
   { 
-    id: 'tr1', 
+    id: 1, 
     name: 'Commits today', 
     branchId: null,
     weight: 0,
@@ -59,7 +59,7 @@ const mockTrackers: Tracker[] = [
     status: 'active',
   },
   { 
-    id: 'tr2', 
+    id: 2, 
     name: 'Weekly streak', 
     branchId: null,
     weight: 0,
@@ -69,7 +69,7 @@ const mockTrackers: Tracker[] = [
     status: 'active',
   },
   { 
-    id: 'tr3', 
+    id: 3, 
     name: 'Morning score', 
     branchId: null,
     weight: 3,
@@ -80,7 +80,7 @@ const mockTrackers: Tracker[] = [
     status: 'active',
   },
   { 
-    id: 'tr4', 
+    id: 4, 
     name: 'Focus time', 
     branchId: null,
     weight: 5,
@@ -91,7 +91,7 @@ const mockTrackers: Tracker[] = [
     status: 'active',
   },
   { 
-    id: 'tr5', 
+    id: 5, 
     name: 'Sleep quality', 
     branchId: null,
     weight: 2,
@@ -102,7 +102,7 @@ const mockTrackers: Tracker[] = [
     status: 'active',
   },
   {
-    id: 'tr6',
+    id: 6,
     name: 'Caffeine intake',
     branchId: null,
     weight: 0,
@@ -130,7 +130,7 @@ export const useTrackerStore = create<TrackerState>((set, get) => ({
     // TODO: Implement real API call
     await new Promise(resolve => setTimeout(resolve, 300));
     const newTracker: Tracker = {
-      id: `tracker-${Date.now()}`,
+      id: Date.now(),
       name: data.name,
       branchId: data.branchId,
       weight: data.target ? data.weight : 0,

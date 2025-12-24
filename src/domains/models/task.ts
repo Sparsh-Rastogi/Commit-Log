@@ -3,7 +3,7 @@ export type TaskTimeMode = 'none' | 'scheduled' | 'period' | 'recurring';
 export type RecurringType = 'days' | 'weekend';
 
 export interface Task {
-  id: string;
+  id: number;
   title: string;
   completed: boolean;
   weight: number;

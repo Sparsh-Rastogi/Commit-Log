@@ -17,8 +17,8 @@ export function BranchList({
   onBranchSelect,
   branchScores = {},
 }: BranchListProps) {
-  const mainBranch = branches.find(b => b.isMain);
-  const commitBranches = branches.filter(b => !b.isMain);
+  const mainBranch = branches.find(b => b.is_main);
+  const commitBranches = branches.filter(b => !b.is_main);
 
   return (
     <div className="flex-1 overflow-y-auto scrollbar-thin py-2">

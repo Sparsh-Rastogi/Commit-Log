@@ -2,7 +2,7 @@ export type TrackerMode = 'value' | 'sum';
 export type TrackerDisplay = 'sum' | 'max' | 'min' | 'average';
 import { TrackerEntry } from './entry';
 export interface Tracker {
-  id: string;
+  id: number;
   name: string;
   branchId: number | null;
 
