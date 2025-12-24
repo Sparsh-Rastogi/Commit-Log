@@ -1,111 +1,121 @@
-import { create } from 'zustand';
-import { Task, TaskTimeMode } from '@/domains/models/task';
+import { create } from "zustand";
+import { apiFetch } from "@/lib/api";
+import { Task, TaskTimeMode } from "@/domains/models/task";
 
 interface TaskState {
   tasks: Task[];
   isLoading: boolean;
-  
+
   // Actions
-  fetchTasks: () => Promise<void>;
-  createTask: (taskData: Omit<Task, 'id' | 'completed'>) => Promise<Task>;
-  updateTask: (taskId: string, updates: Partial<Task>) => Promise<void>;
-  deleteTask: (taskId: string) => Promise<void>;
-  toggleTask: (taskId: string) => void;
-  postponeTask: (taskId: string, newDate: Date) => void;
-  removeTaskDate: (taskId: string) => void;
+  fetchTasks: (branchId: number) => Promise<void>;
+  createTask: (taskData: Omit<Task, "id" | "completed">) => Promise<Task>;
+  updateTask: (taskId: number, updates: Partial<Task>) => Promise<void>;
+  deleteTask: (taskId: number) => Promise<void>;
+  toggleTask: (taskId: number) => Promise<void>;
+  postponeTask: (taskId: number, newDate: Date) => Promise<void>;
+  removeTaskDate: (taskId: number) => Promise<void>;
   setTasks: (tasks: Task[]) => void;
-  
+
   // Selectors
   getTasksByBranch: (branchId: number | null) => Task[];
 }
-
-// TODO: Replace with real API calls
-const mockTasks: Task[] = []
-// const mockTasks: Task[] = [
-//   { id: 't1', title: 'Review pull requests', completed: false, weight: 3, modifiers: ['priority'], branchId: 'main', timeMode: 'none' },
-//   { id: 't2', title: 'Update documentation', completed: true, weight: 2, modifiers: [], branchId: 'main', timeMode: 'none' },
-//   { id: 't3', title: 'Morning meditation', completed: false, weight: 1, modifiers: ['daily'], branchId: 'commit-1', timeMode: 'scheduled', scheduledDate: new Date() },
-//   { id: 't4', title: 'Exercise routine', completed: true, weight: 2, modifiers: ['daily', 'streak'], branchId: 'commit-1', timeMode: 'recurring', recurringType: 'days', recurringDays: 1 },
-//   { id: 't5', title: 'Deep work session', completed: false, weight: 5, modifiers: ['focus'], branchId: 'commit-2', timeMode: 'scheduled', scheduledDate: new Date(Date.now() + 86400000) },
-//   { id: 't6', title: 'Code review', completed: false, weight: 3, modifiers: [], branchId: 'commit-2', timeMode: 'none' },
-//   { id: 't7', title: 'Wind down routine', completed: false, weight: 1, modifiers: [], branchId: 'commit-3', timeMode: 'period', startDate: new Date(), endDate: new Date(Date.now() + 604800000) },
-//   { id: 't8', title: 'No screens after 10pm', completed: true, weight: 2, modifiers: ['challenge'], branchId: 'commit-3', timeMode: 'recurring', recurringType: 'weekend' },
-// ];
 
 export const useTaskStore = create<TaskState>((set, get) => ({
   tasks: [],
   isLoading: false,
 
-  fetchTasks: async () => {
+  // 🔹 Fetch tasks for a branch
+  fetchTasks: async (branchId) => {
     set({ isLoading: true });
-    // TODO: Implement real API call
-    await new Promise(resolve => setTimeout(resolve, 300));
-    set({ tasks: mockTasks, isLoading: false });
+    const tasks = await apiFetch<Task[]>(`/tasks/?branch=${branchId}`);
+    set({ tasks, isLoading: false });
   },
 
+  // 🔹 Create task
   createTask: async (taskData) => {
-    // TODO: Implement real API call
-    await new Promise(resolve => setTimeout(resolve, 300));
-    const newTask: Task = {
-      ...taskData,
-      id: `task-${Date.now()}`,
-      completed: false,
-    };
-    set(state => ({ tasks: [...state.tasks, newTask] }));
-    return newTask;
+    const task = await apiFetch<Task>("/tasks/", {
+      method: "POST",
+      body: JSON.stringify(taskData),
+    });
+
+    set(state => ({ tasks: [...state.tasks, task] }));
+    return task;
   },
 
+  // 🔹 Generic update (future-proof)
   updateTask: async (taskId, updates) => {
-    // TODO: Implement real API call
-    await new Promise(resolve => setTimeout(resolve, 300));
+    const updated = await apiFetch<Task>(`/tasks/${taskId}/`, {
+      method: "PATCH",
+      body: JSON.stringify(updates),
+    });
+
     set(state => ({
-      tasks: state.tasks.map(task =>
-        task.id === taskId ? { ...task, ...updates } : task
-      ),
+      tasks: state.tasks.map(t => (t.id === taskId ? updated : t)),
     }));
   },
 
+  // 🔹 Delete task
   deleteTask: async (taskId) => {
-    // TODO: Implement real API call
-    await new Promise(resolve => setTimeout(resolve, 300));
+    await apiFetch(`/tasks/${taskId}/`, { method: "DELETE" });
     set(state => ({
-      tasks: state.tasks.filter(task => task.id !== taskId),
+      tasks: state.tasks.filter(t => t.id !== taskId),
     }));
   },
 
-  toggleTask: (taskId) => {
-    set(state => ({
-      tasks: state.tasks.map(task =>
-        task.id === taskId ? { ...task, completed: !task.completed } : task
-      ),
-    }));
-  },
+  // 🔹 Toggle completion
+  toggleTask: async (taskId) => {
+    const res = await apiFetch<{ completed: boolean }>(
+      `/tasks/${taskId}/toggle/`,
+      { method: "PATCH" }
+    );
 
-  postponeTask: (taskId, newDate) => {
     set(state => ({
       tasks: state.tasks.map(task =>
         task.id === taskId
-          ? { ...task, completed: false, timeMode: 'scheduled' as TaskTimeMode, scheduledDate: newDate }
+          ? { ...task, completed: res.completed }
           : task
       ),
     }));
   },
 
-  removeTaskDate: (taskId) => {
+  // 🔹 Postpone / reschedule
+  postponeTask: async (taskId, newDate) => {
+    const updated = await apiFetch<Task>(
+      `/tasks/${taskId}/reschedule/`,
+      {
+        method: "PATCH",
+        body: JSON.stringify({
+          scheduled_at: newDate.toISOString(),
+        }),
+      }
+    );
+
     set(state => ({
       tasks: state.tasks.map(task =>
-        task.id === taskId
-          ? { ...task, timeMode: 'none' as TaskTimeMode, scheduledDate: undefined, startDate: undefined, endDate: undefined }
-          : task
+        task.id === taskId ? updated : task
       ),
     }));
   },
 
-  setTasks: (tasks) => {
-    set({ tasks });
+  // 🔹 Remove date (→ NONE)
+  removeTaskDate: async (taskId) => {
+    const updated = await apiFetch<Task>(
+      `/tasks/${taskId}/remove-date/`,
+      { method: "PATCH" }
+    );
+
+    set(state => ({
+      tasks: state.tasks.map(task =>
+        task.id === taskId ? updated : task
+      ),
+    }));
   },
 
+  setTasks: (tasks) => set({ tasks }),
+
+  // 🔹 Selector
   getTasksByBranch: (branchId) => {
+    if (!branchId) return [];
     return get().tasks.filter(task => task.branchId === branchId);
   },
 }));
