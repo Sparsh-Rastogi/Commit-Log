@@ -121,7 +121,7 @@ const Index = () => {
     await createBranch(name, description);
   };
 
-  const handleTaskToggle = (taskId: string) => {
+  const handleTaskToggle = (taskId: number) => {
     toggleTask(taskId);
   };
 
@@ -130,7 +130,7 @@ const Index = () => {
     setTrackerModalOpen(true);
   };
 
-  const handlePushEntry = (trackerId: string, value: number) => {
+  const handlePushEntry = (trackerId: number, value: number) => {
     pushEntry(trackerId, value);
   };
 
@@ -141,11 +141,11 @@ const Index = () => {
     await createTask({ ...taskData, branchId: currentBranchId });
   };
 
-  const handlePostponeTask = (taskId: string, newDate: Date) => {
+  const handlePostponeTask = (taskId: number, newDate: Date) => {
     postponeTask(taskId, newDate);
   };
 
-  const handleRemoveTaskDate = (taskId: string) => {
+  const handleRemoveTaskDate = (taskId: number) => {
     removeTaskDate(taskId);
   };
 
@@ -161,7 +161,7 @@ const Index = () => {
     await createTracker({ ...data, branchId: currentBranchId });
   };
 
-  const handleDeleteTracker = async (trackerId: string) => {
+  const handleDeleteTracker = async (trackerId: number) => {
     await deleteTracker(trackerId);
   };
 

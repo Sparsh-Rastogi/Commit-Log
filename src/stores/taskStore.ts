@@ -8,11 +8,11 @@ interface TaskState {
   // Actions
   fetchTasks: () => Promise<void>;
   createTask: (taskData: Omit<Task, 'id' | 'completed'>) => Promise<Task>;
-  updateTask: (taskId: string, updates: Partial<Task>) => Promise<void>;
-  deleteTask: (taskId: string) => Promise<void>;
-  toggleTask: (taskId: string) => void;
-  postponeTask: (taskId: string, newDate: Date) => void;
-  removeTaskDate: (taskId: string) => void;
+  updateTask: (taskId: number, updates: Partial<Task>) => Promise<void>;
+  deleteTask: (taskId: number) => Promise<void>;
+  toggleTask: (taskId: number) => void;
+  postponeTask: (taskId: number, newDate: Date) => void;
+  removeTaskDate: (taskId: number) => void;
   setTasks: (tasks: Task[]) => void;
   
   // Selectors
@@ -48,7 +48,7 @@ export const useTaskStore = create<TaskState>((set, get) => ({
     await new Promise(resolve => setTimeout(resolve, 300));
     const newTask: Task = {
       ...taskData,
-      id: `task-${Date.now()}`,
+      id: Date.now(),
       completed: false,
     };
     set(state => ({ tasks: [...state.tasks, newTask] }));
