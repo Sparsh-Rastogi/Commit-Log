@@ -1,6 +1,8 @@
 import { create } from "zustand";
 import { apiFetch } from "@/lib/api";
 import { getCookie } from "@/lib/utils";
+import {initCSRF} from "@/lib/api";
+// import get from "node_modules/react-hook-form/dist/utils/get";
 export interface User {
   id: number;
   username: string;
@@ -22,15 +24,20 @@ interface AuthState {
   updateXpAndLevel: (newXp: number, newLevel: number) => void;
 }
 
-export const useAuthStore = create<AuthState>((set) => ({
+export const useAuthStore = create<AuthState>((set, get) => ({
   user: null,
   isLoading: true,
   isAuthenticated: false,
 
   // 🔑 Called once on app load
   checkAuth: async () => {
+    const {isAuthenticated,isLoading}= get();
+    if(isAuthenticated && !isLoading) return; // already authenticated
+    set({ isLoading: true });
+    await initCSRF();
     try {
       const user = await apiFetch<User>("/auth/me/");
+      // console.log("CSRF initialized in authStore");
       set({
         user,
         isAuthenticated: true,

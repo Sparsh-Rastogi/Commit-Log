@@ -1,15 +1,21 @@
 from rest_framework import serializers
+
+from branches.models import Branch
 from .models import Tracker, TrackerEntry
 
 
 class TrackerSerializer(serializers.ModelSerializer):
+    branchId = serializers.PrimaryKeyRelatedField(
+        source="branch", queryset=Branch.objects.all(), write_only=True # to be set in view
+    )
     class Meta:
         model = Tracker
         fields = [
             "id",
             "name",
             "branch",
-            "tracker_type",
+            # "tracker_type",
+            "branchId",
             "target_type",
             "target_value",
             "weight",

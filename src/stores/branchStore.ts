@@ -35,17 +35,19 @@ export const useBranchStore = create<BranchState>((set, get) => ({
   isPulling: false,
 
   selectBranch: (branchId) => {
+    // console.log("Branch selected:", branchId);
     set({ currentBranchId: branchId });
   },
 
   fetchBranches: async () => {
     set({ isLoading: true });
     const branches = await apiFetch<Branch[]>("/branches/");
-    const mainBranch = branches.find(b => b.isMain);
-
+    const mainBranch = branches.find(b => b.is_main);
+    // console.log("Main branch:", mainBranch);
+    console.log("Fetched branches:", branches.find(b => b.id === get().currentBranchId));
     set({
       branches,
-      currentBranchId: mainBranch ? mainBranch.id : null,
+      currentBranchId: get().currentBranchId? get().currentBranchId : mainBranch ? mainBranch.id : null,
       isLoading: false,
     });
   },
@@ -113,8 +115,9 @@ export const useBranchStore = create<BranchState>((set, get) => ({
 
   getCurrentBranch: () => {
     const { branches, currentBranchId } = get();
-    console.log(branches);
-    if(currentBranchId === null) return branches.find(b => b.is_main);
+    // console.log(branches);
+    console.log("Getting current branch for ID:", currentBranchId);
+    // if(currentBranchId === null) return branches.find(b => b.is_main);
     return branches.find(b => b.id === currentBranchId);
   },
 }));

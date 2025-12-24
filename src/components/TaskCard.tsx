@@ -176,18 +176,6 @@ export function TaskCard({ task, onToggle, onPostpone, onRemoveDate }: TaskCardP
             </div>
 
             {/* Modifiers */}
-            {task.modifiers.map((mod) => (
-              <div
-                key={mod}
-                className={cn(
-                  "flex items-center gap-1 px-2 py-0.5 rounded border text-[10px] font-medium uppercase",
-                  modifierColors[mod] || 'bg-muted text-muted-foreground border-muted'
-                )}
-              >
-                {modifierIcons[mod]}
-                <span>{mod}</span>
-              </div>
-            ))}
           </div>
         </div>
 

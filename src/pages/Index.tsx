@@ -24,46 +24,50 @@ const Index = () => {
   /* =======================
      Auth Store
   ======================= */
-  const { user, checkAuth } = useAuthStore();
+  // const { user, checkAuth } = useAuthStore();
+  const user = useAuthStore(state => state.user);
+  const checkAuth = useAuthStore(state => state.checkAuth); 
 
   /* =======================
      Branch Store
   ======================= */
-  const {
-    branches,
-    currentBranchId,
-    selectBranch,
-    fetchBranches,
-    createBranch,
-    getCurrentBranch,
-    pullBranch,
-    isPulling,
-  } = useBranchStore();
+
+  const branches = useBranchStore(state => state.branches);
+  const currentBranchId = useBranchStore(state => state.currentBranchId);
+  const selectBranch = useBranchStore(state => state.selectBranch);
+  const fetchBranches = useBranchStore(state => state.fetchBranches);
+  const createBranch = useBranchStore(state => state.createBranch);
+  const getCurrentBranch = useBranchStore(state => state.getCurrentBranch);
+  const pullBranch = useBranchStore(state => state.pullBranch);
+  const isPulling = useBranchStore(state => state.isPulling); 
 
   /* =======================
      Task Store
   ======================= */
-  const {
-    tasks,
-    fetchTasks,
-    createTask,
-    toggleTask,
-    postponeTask,
-    removeTaskDate,
-  } = useTaskStore();
-
+  // const {
+  //   tasks,
+  //   fetchTasks,
+  //   createTask,
+  //   toggleTask,
+  //   postponeTask,
+  //   removeTaskDate,
+  // } = useTaskStore();
+  const tasks = useTaskStore(state => state.tasks);
+  const fetchTasks = useTaskStore(state => state.fetchTasks);
+  const createTask = useTaskStore(state => state.createTask);
+  const toggleTask = useTaskStore(state => state.toggleTask);
+  const postponeTask = useTaskStore(state => state.postponeTask);
+  const removeTaskDate = useTaskStore(state => state.removeTaskDate);
   /* =======================
      Tracker Store
   ======================= */
-  const {
-    trackers,
-    selectedTracker,
-    fetchTrackers,
-    createTracker,
-    deleteTracker,
-    pushEntry,
-    setSelectedTracker,
-  } = useTrackerStore();
+  const trackers = useTrackerStore(state => state.trackers);
+  const fetchTrackers = useTrackerStore(state => state.fetchTrackers);
+  const selectedTracker = useTrackerStore(state => state.selectedTracker);
+  const setSelectedTracker = useTrackerStore(state => state.setSelectedTracker);
+  const createTracker = useTrackerStore(state => state.createTracker);
+  const deleteTracker = useTrackerStore(state => state.deleteTracker);
+  const pushEntry = useTrackerStore(state => state.pushEntry);
 
   /* =======================
      Modal State
@@ -86,21 +90,29 @@ const Index = () => {
   /* =======================
      App Initialization
   ======================= */
+  // AUTH bootstrap
   useEffect(() => {
-    const initialize = async () => {
-      await checkAuth();      // must complete first
-      console.log("Auth checked");
-      await fetchBranches();
-      console.log(getCurrentBranch());
-      console.log("Branches fetched");
-      // await fetchTasks();
-      // await fetchTrackers();
-    };
-    initialize();
-  }, []);
+    checkAuth();
+    // console.log("Auth checked");
+  }, [checkAuth]);
 
-  const currentBranch = getCurrentBranch();
-  console.log("Current Branch:", currentBranch);
+  // DATA bootstrap
+  useEffect(() => {
+    // if (!currentBranchId) return;
+    
+    fetchBranches();
+    console.log("Fetching branches...");
+    // console.log(currentBranchId);
+    setCurrentBranch(getCurrentBranch() || null);
+    console.log("Branches fetched");
+    fetchTasks(currentBranchId);
+    console.log(tasks)
+    fetchTrackers(currentBranchId);
+  }, [currentBranchId]);
+
+  const [currentBranch, setCurrentBranch] = useState(null);
+  // const currentBranch = getCurrentBranch();
+  // console.log("Current Branch:", currentBranch);
 
   if (!currentBranch) {
     return (
@@ -114,6 +126,8 @@ const Index = () => {
      Handlers
   ======================= */
   const handleBranchSelect = (branchId: number | null) => {
+    // console.log("Selecting branch:", branchId);
+    console.log(branches);
     if (branchId) selectBranch(branchId);
   };
 
@@ -139,6 +153,7 @@ const Index = () => {
   ) => {
     if (!currentBranchId) return;
     await createTask({ ...taskData, branchId: currentBranchId });
+    fetchTasks(currentBranchId);
   };
 
   const handlePostponeTask = (taskId: number, newDate: Date) => {

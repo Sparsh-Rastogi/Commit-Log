@@ -15,7 +15,7 @@ class TrackerListCreateView(APIView):
     def get(self, request):
         branch_id = request.query_params.get("branch")
         trackers = Tracker.objects.filter(branch__owner=request.user)
-
+        print("Initial trackers:", trackers)
         if branch_id:
             trackers = trackers.filter(branch_id=branch_id)
 
@@ -24,13 +24,10 @@ class TrackerListCreateView(APIView):
     def post(self, request):
         serializer = TrackerSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-
-        branch = Branch.objects.get(
-            id=serializer.validated_data["branch"].id,
-            owner=request.user,
-        )
-
+        branch_id = request.data.get("branchId")
+        branch = Branch.objects.get(id=branch_id, owner=request.user)
         tracker = serializer.save(branch=branch)
+
         return Response(TrackerSerializer(tracker).data, status=201)
 
 from rest_framework.decorators import api_view, permission_classes

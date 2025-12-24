@@ -1,11 +1,71 @@
-import { Branch, Task, Tracker } from '@/types';
-import { TaskCard } from './TaskCard';
-import { TrackerCard } from './TrackerCard';
-import { GitBranch, CheckSquare, Activity, Plus, GitMerge, Loader2 } from 'lucide-react';
-import { useMemo } from 'react';
-import { branchScore } from '@/domains/services/score.service';
-import { Button } from '@/components/ui/button';
+import { Branch, Task, Tracker } from "@/types";
+import { TaskCard } from "./TaskCard";
+import { TrackerCard } from "./TrackerCard";
+import {
+  GitBranch,
+  CheckSquare,
+  Activity,
+  Plus,
+  GitMerge,
+  Loader2,
+} from "lucide-react";
+import { useMemo } from "react";
+import { Button } from "@/components/ui/button";
 
+/* ======================================================
+   Branch Score Calculation (mirrors backend logic)
+====================================================== */
+function calculateBranchScore(tasks: Task[], trackers: Tracker[]) {
+  let earned = 0;
+  let total = 0;
+
+  // Tasks
+  for (const task of tasks) {
+    total += task.weight;
+    if (task.completed) {
+      earned += task.weight;
+    }
+  }
+
+  // Trackers
+  for (const tracker of trackers) {
+    if (!tracker.weight || tracker.target == null) continue;
+
+    total += tracker.weight;
+
+    // const sum = tracker.entries.reduce((acc, e) => acc + e.value, 0);
+    const sum = tracker.entries
+      ? tracker.entries.reduce((acc, e) => acc + e.value, 0)
+      : 0;
+
+    let contribution = 0;
+
+    if (tracker.threshold != null) {
+      // Threshold trackers contribute fully until they die
+      if (sum < tracker.threshold) {
+        contribution = tracker.weight;
+      }
+    } else {
+      contribution = Math.min(
+        (sum / tracker.target) * tracker.weight,
+        tracker.weight
+      );
+    }
+
+    earned += Math.max(0, contribution);
+  }
+
+  return {
+    percent: total === 0 ? 0 : earned / total,
+    completedTasks: tasks.filter(t => t.completed).length,
+    totalTasks: tasks.length,
+    scoringTrackers: trackers.filter(t => t.weight > 0).length,
+  };
+}
+
+/* ======================================================
+   Component
+====================================================== */
 interface MainContentProps {
   currentBranch: Branch;
   tasks: Task[];
@@ -22,11 +82,11 @@ interface MainContentProps {
   isPulling?: boolean;
 }
 
-export function MainContent({ 
-  currentBranch, 
-  tasks, 
-  trackers, 
-  onTaskToggle, 
+export function MainContent({
+  currentBranch,
+  tasks,
+  trackers,
+  onTaskToggle,
   onTrackerClick,
   onPushEntry,
   onDeleteTracker,
@@ -37,29 +97,32 @@ export function MainContent({
   onPullCommit,
   isPulling = false,
 }: MainContentProps) {
+  /* =========================
+     Branch-scoped data
+  ========================= */
   const branchTasks = tasks.filter(t => t.branchId === currentBranch.id);
   const branchTrackers = trackers.filter(t => t.branchId === currentBranch.id);
 
-  // Calculate dynamic branch score using domain service
-  const score = useMemo(() => {
-    return branchScore(branchTasks, branchTrackers);
-  }, [branchTasks, branchTrackers]);
+  const scoreData = useMemo(
+    () => calculateBranchScore(branchTasks, branchTrackers),
+    [branchTasks, branchTrackers]
+  );
 
-  const scorePercent = Math.round(score * 100);
+  const scorePercent = Math.round(scoreData.percent * 100);
 
   return (
-    <main className="flex-1 h-screen overflow-y-auto bg-background scrollbar-thin">
-      {/* Header */}
-      <header className="sticky top-0 z-10 bg-background/95 backdrop-blur border-b border-border px-6 py-4">
+    <main className="flex-1 h-screen overflow-y-auto bg-background">
+      {/* ================= Header ================= */}
+      <header className="sticky top-0 z-10 bg-background/95 backdrop-blur border-b px-6 py-4">
         <div className="flex items-center justify-between">
           <div>
             <div className="flex items-center gap-3">
               <GitBranch className="w-5 h-5 text-commit" />
-              <h1 className="text-lg font-semibold font-mono text-foreground">
+              <h1 className="font-mono text-lg font-semibold">
                 {currentBranch.name}
               </h1>
               {currentBranch.is_main && (
-                <span className="px-2 py-0.5 text-[10px] font-semibold uppercase bg-commit/20 text-commit rounded-full">
+                <span className="px-2 py-0.5 text-[10px] bg-commit/20 text-commit rounded">
                   default
                 </span>
               )}
@@ -71,37 +134,38 @@ export function MainContent({
             )}
           </div>
 
-          {/* Commit Score and Pull Button - only for non-main branches */}
           {!currentBranch.is_main && (
             <div className="flex items-center gap-4">
               <div className="flex flex-col items-end gap-1">
-                <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+                <span className="text-[10px] uppercase text-muted-foreground">
                   Commit Progress
                 </span>
                 <div className="flex items-center gap-2">
-                  <div className="w-32 h-2 bg-surface-3 rounded-full overflow-hidden">
-                    <div 
-                      className="h-full bg-gradient-to-r from-commit to-xp rounded-full transition-all duration-500"
+                  <div className="w-32 h-2 bg-surface-3 rounded overflow-hidden">
+                    <div
+                      className="h-full bg-gradient-to-r from-commit to-xp transition-all"
                       style={{ width: `${scorePercent}%` }}
                     />
                   </div>
-                  <span className="font-mono text-sm font-semibold text-commit">{scorePercent}%</span>
+                  <span className="font-mono text-sm text-commit">
+                    {scorePercent}%
+                  </span>
                 </div>
                 <span className="text-[9px] text-muted-foreground">
-                  {branchTasks.filter(t => t.completed).length}/{branchTasks.length} tasks · {branchTrackers.filter(t => t.weight > 0).length} scoring trackers
+                  {scoreData.completedTasks}/{scoreData.totalTasks} tasks ·{" "}
+                  {scoreData.scoringTrackers} scoring trackers
                 </span>
               </div>
-              
-              {/* Pull Commit Button */}
+
               <Button
                 onClick={onPullCommit}
                 disabled={isPulling}
-                className="bg-commit text-primary-foreground hover:bg-commit/90 gap-2 font-semibold"
+                className="bg-commit gap-2"
               >
                 {isPulling ? (
                   <>
                     <Loader2 className="w-4 h-4 animate-spin" />
-                    Pulling...
+                    Pulling…
                   </>
                 ) : (
                   <>
@@ -115,36 +179,21 @@ export function MainContent({
         </div>
       </header>
 
+      {/* ================= Content ================= */}
       <div className="p-6 space-y-8">
-        {/* Tasks Section */}
-        <section>
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-2">
-              <CheckSquare className="w-4 h-4 text-muted-foreground" />
-              <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
-                Tasks
-              </h2>
-              <span className="ml-1 px-1.5 py-0.5 text-[10px] font-mono bg-surface-2 text-muted-foreground rounded">
-                {branchTasks.filter(t => t.completed).length}/{branchTasks.length}
-              </span>
-            </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={onAddTask}
-              className="h-7 px-2 text-xs gap-1 text-muted-foreground hover:text-commit hover:bg-commit/10"
-            >
-              <Plus className="w-3.5 h-3.5" />
-              Add Task
-            </Button>
-          </div>
-
-          {branchTasks.length > 0 ? (
+        {/* -------- Tasks -------- */}
+        <Section
+          title="Tasks"
+          count={`${scoreData.completedTasks}/${scoreData.totalTasks}`}
+          icon={<CheckSquare className="w-4 h-4" />}
+          onAdd={onAddTask}
+        >
+          {branchTasks.length ? (
             <div className="grid gap-3">
-              {branchTasks.map((task) => (
-                <TaskCard 
-                  key={task.id} 
-                  task={task} 
+              {branchTasks.map(task => (
+                <TaskCard
+                  key={task.id}
+                  task={task}
                   onToggle={onTaskToggle}
                   onPostpone={onPostponeTask}
                   onRemoveDate={onRemoveTaskDate}
@@ -152,41 +201,22 @@ export function MainContent({
               ))}
             </div>
           ) : (
-            <EmptyState 
-              icon={<CheckSquare className="w-8 h-8" />}
-              message="No tasks in this branch"
-            />
+            <EmptyState icon={<CheckSquare />} message="No tasks in this branch" />
           )}
-        </section>
+        </Section>
 
-        {/* Trackers Section */}
-        <section>
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-2">
-              <Activity className="w-4 h-4 text-muted-foreground" />
-              <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground">
-                Trackers
-              </h2>
-              <span className="ml-1 px-1.5 py-0.5 text-[10px] font-mono bg-surface-2 text-muted-foreground rounded">
-                {branchTrackers.length}
-              </span>
-            </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={onAddTracker}
-              className="h-7 px-2 text-xs gap-1 text-muted-foreground hover:text-accent hover:bg-accent/10"
-            >
-              <Plus className="w-3.5 h-3.5" />
-              Add Tracker
-            </Button>
-          </div>
-
-          {branchTrackers.length > 0 ? (
-            <div className="grid gap-3 sm:grid-cols-2">
-              {branchTrackers.map((tracker) => (
-                <TrackerCard 
-                  key={tracker.id} 
+        {/* -------- Trackers -------- */}
+        <Section
+          title="Trackers"
+          count={branchTrackers.length}
+          icon={<Activity className="w-4 h-4" />}
+          onAdd={onAddTracker}
+        >
+          {branchTrackers.length ? (
+            <div className="grid sm:grid-cols-2 gap-3">
+              {branchTrackers.map(tracker => (
+                <TrackerCard
+                  key={tracker.id}
                   tracker={tracker}
                   onClick={() => onTrackerClick(tracker)}
                   onPushEntry={onPushEntry}
@@ -195,20 +225,64 @@ export function MainContent({
               ))}
             </div>
           ) : (
-            <EmptyState 
-              icon={<Activity className="w-8 h-8" />}
+            <EmptyState
+              icon={<Activity />}
               message="No trackers in this branch"
             />
           )}
-        </section>
+        </Section>
       </div>
     </main>
   );
 }
 
-function EmptyState({ icon, message }: { icon: React.ReactNode; message: string }) {
+/* ======================================================
+   Helpers
+====================================================== */
+function Section({
+  title,
+  count,
+  icon,
+  onAdd,
+  children,
+}: {
+  title: string;
+  count: React.ReactNode;
+  icon: React.ReactNode;
+  onAdd?: () => void;
+  children: React.ReactNode;
+}) {
   return (
-    <div className="flex flex-col items-center justify-center py-12 text-muted-foreground/50">
+    <section>
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center gap-2 text-muted-foreground">
+          {icon}
+          <h2 className="text-sm uppercase font-semibold">{title}</h2>
+          <span className="text-[10px] font-mono bg-surface-2 px-1.5 rounded">
+            {count}
+          </span>
+        </div>
+        {onAdd && (
+          <Button variant="ghost" size="sm" onClick={onAdd}>
+            <Plus className="w-3.5 h-3.5 mr-1" />
+            Add
+          </Button>
+        )}
+      </div>
+      {children}
+    </section>
+  );
+}
+
+function EmptyState({
+  icon,
+  message,
+}: {
+  icon: React.ReactNode;
+  message: string;
+}) {
+  return (
+    <div className="flex flex-col items-center py-12 text-muted-foreground/50">
       {icon}
       <p className="mt-2 text-sm">{message}</p>
     </div>

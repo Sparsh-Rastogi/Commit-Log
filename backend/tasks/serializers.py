@@ -1,14 +1,25 @@
 from rest_framework import serializers
+
+from branches.models import Branch
 from .models import Task
 
 
 class TaskSerializer(serializers.ModelSerializer):
+    branchId = serializers.PrimaryKeyRelatedField(
+        queryset=Branch.objects.all(),
+        source="branch",
+        write_only=True
+    )
+
+    branch = serializers.PrimaryKeyRelatedField(read_only=True)
+
     class Meta:
         model = Task
         fields = [
             "id",
             "title",
             "branch",
+            "branchId",
             "completed",
             "weight",
             "time_type",

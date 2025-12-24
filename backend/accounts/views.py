@@ -7,6 +7,13 @@ from django.utils.decorators import method_decorator
 
 from .serializers import LoginSerializer, UserSerializer
 
+from django.http import JsonResponse
+from django.views.decorators.csrf import ensure_csrf_cookie
+
+@ensure_csrf_cookie
+def csrf(request):
+    return JsonResponse({ "detail": "CSRF cookie set" })
+
 
 @method_decorator(csrf_exempt, name="dispatch")
 class LoginView(APIView):

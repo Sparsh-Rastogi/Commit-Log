@@ -14,25 +14,27 @@ class TaskListCreateView(APIView):
 
     def get(self, request):
         branch_id = request.query_params.get("branch")
-
+        print("Branch ID from query params:", branch_id)
         tasks = Task.objects.filter(branch__owner=request.user)
 
         if branch_id:
             tasks = tasks.filter(branch_id=branch_id)
-
+        # print("Filtered Tasks:", tasks)
         serializer = TaskSerializer(tasks, many=True)
         return Response(serializer.data)
 
     def post(self, request):
         serializer = TaskSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-
+        print(request.data)
+        print(serializer.validated_data)
         branch = Branch.objects.get(
-            id=serializer.validated_data["branch"].id,
+            id=request.data.get("branchId"),
             owner=request.user,
         )
 
         task = serializer.save(branch=branch)
+        print(task)
         return Response(TaskSerializer(task).data, status=status.HTTP_201_CREATED)
 
 

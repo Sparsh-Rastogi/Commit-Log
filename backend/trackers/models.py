@@ -17,7 +17,7 @@ class Tracker(models.Model):
     ]
 
     name = models.CharField(max_length=255)
-    branch = models.ForeignKey(Branch, on_delete=models.CASCADE, related_name="trackers")
+    branch = models.ForeignKey(Branch, on_delete=models.CASCADE, default=None, related_name="trackers")
 
     tracker_type = models.CharField(max_length=20, choices=TRACKER_TYPE_CHOICES, default="PLAIN")
     target_type = models.CharField(max_length=20, choices=TARGET_TYPE_CHOICES, default="NONE")

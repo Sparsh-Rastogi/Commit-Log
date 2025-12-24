@@ -1,18 +1,28 @@
-import { create } from 'zustand';
-import { Tracker, TrackerMode, TrackerDisplay } from '@/domains/models/tracker';
-import { TrackerEntry } from '@/domains/models/entry';
-import { pushEntry as pushTrackerEntry } from '@/domains/services/tracker.service';
+import { create } from "zustand";
+import { apiFetch } from "@/lib/api";
+import { Tracker, TrackerMode, TrackerDisplay } from "@/domains/models/tracker";
+import { TrackerEntry } from "@/domains/models/entry";
+
+function adaptTrackerData(data: any): Tracker {
+  return {
+    ...data,
+    status: data.is_active ? "active" : "dead",
+    target: data.target_value,
+    branchId: data.branch,
+    branch: undefined,
+  };
+}
 
 interface TrackerState {
   trackers: Tracker[];
   isLoading: boolean;
   selectedTracker: Tracker | null;
-  
+
   // Actions
-  fetchTrackers: () => Promise<void>;
+  fetchTrackers: (branchId: number) => Promise<void>;
   createTracker: (data: {
     name: string;
-    branchId: number | null;
+    branchId: number;
     mode: TrackerMode;
     displayMode: TrackerDisplay;
     weight: number;
@@ -21,171 +31,144 @@ interface TrackerState {
   }) => Promise<Tracker>;
   updateTracker: (trackerId: number, updates: Partial<Tracker>) => Promise<void>;
   deleteTracker: (trackerId: number) => Promise<void>;
-  pushEntry: (trackerId: number, value: number) => void;
+  pushEntry: (trackerId: number, value: number) => Promise<void>;
+  fetchEntries: (trackerId: number) => Promise<void>;
   setSelectedTracker: (tracker: Tracker | null) => void;
-  setTrackers: (trackers: Tracker[]) => void;
-  
+
   // Selectors
   getTrackersByBranch: (branchId: number | null) => Tracker[];
 }
-
-// Helper to generate random entries
-function generateEntries(count: number, maxValue: number, daysBack: number = 90): TrackerEntry[] {
-  const entries: TrackerEntry[] = [];
-  const now = Date.now();
-  
-  for (let i = 0; i < count; i++) {
-    const daysAgo = Math.floor(Math.random() * daysBack);
-    const date = new Date(now - daysAgo * 24 * 60 * 60 * 1000);
-    entries.push({
-      value: Math.floor(Math.random() * maxValue) + 1,
-      createdAt: date,
-    });
-  }
-  
-  return entries.sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime());
-}
-
-// TODO: Replace with real API calls
-const mockTrackers: Tracker[] = [
-  { 
-    id: 1, 
-    name: 'Commits today', 
-    branchId: null,
-    weight: 0,
-    mode: 'sum',
-    displayMode: 'sum',
-    entries: generateEntries(45, 10),
-    status: 'active',
-  },
-  { 
-    id: 2, 
-    name: 'Weekly streak', 
-    branchId: null,
-    weight: 0,
-    mode: 'value',
-    displayMode: 'max',
-    entries: generateEntries(30, 7),
-    status: 'active',
-  },
-  { 
-    id: 3, 
-    name: 'Morning score', 
-    branchId: null,
-    weight: 3,
-    mode: 'sum',
-    target: 100,
-    displayMode: 'average',
-    entries: generateEntries(20, 15),
-    status: 'active',
-  },
-  { 
-    id: 4, 
-    name: 'Focus time', 
-    branchId: null,
-    weight: 5,
-    mode: 'sum',
-    target: 480,
-    displayMode: 'sum',
-    entries: generateEntries(25, 60),
-    status: 'active',
-  },
-  { 
-    id: 5, 
-    name: 'Sleep quality', 
-    branchId: null,
-    weight: 2,
-    mode: 'value',
-    target: 90,
-    displayMode: 'average',
-    entries: generateEntries(30, 100),
-    status: 'active',
-  },
-  {
-    id: 6,
-    name: 'Caffeine intake',
-    branchId: null,
-    weight: 0,
-    mode: 'sum',
-    threshold: 500,
-    displayMode: 'sum',
-    entries: generateEntries(15, 100),
-    status: 'active',
-  },
-];
 
 export const useTrackerStore = create<TrackerState>((set, get) => ({
   trackers: [],
   isLoading: false,
   selectedTracker: null,
 
-  fetchTrackers: async () => {
+  /* =========================
+     Fetch trackers for branch
+  ========================= */
+  fetchTrackers: async (branchId) => {
+    if(!branchId) return;
     set({ isLoading: true });
-    // TODO: Implement real API call
-    await new Promise(resolve => setTimeout(resolve, 300));
-    set({ trackers: mockTrackers, isLoading: false });
+    console.log("Fetching trackers for branch:", branchId);
+    const trackers = await apiFetch<Tracker[]>(
+      `/trackers/?branch=${branchId}`
+    );
+    console.log("trackers before fetch:", trackers);
+
+    set({ trackers: trackers.map(adaptTrackerData), isLoading: false });
   },
 
+  /* =========================
+     Create tracker
+  ========================= */
   createTracker: async (data) => {
-    // TODO: Implement real API call
-    await new Promise(resolve => setTimeout(resolve, 300));
-    const newTracker: Tracker = {
-      id: Date.now(),
-      name: data.name,
-      branchId: data.branchId,
-      weight: data.target ? data.weight : 0,
-      mode: data.mode,
-      displayMode: data.displayMode,
-      target: data.target,
-      threshold: data.threshold,
-      entries: [],
-      status: 'active',
-    };
-    set(state => ({ trackers: [...state.trackers, newTracker] }));
-    return newTracker;
+    const tracker = await apiFetch<Tracker>("/trackers/", {
+      method: "POST",
+      body: JSON.stringify({
+        name: data.name,
+        branch: data.branchId,
+        // tracker_type: data.mode,
+        target_type: data.target
+          ? data.threshold
+            ? "THRESHOLD"
+            : "VALUE"
+          : "NONE",
+        target_value: data.target ?? null,
+        weight: data.weight,
+      }),
+    });
+
+    set(state => ({ trackers: [...state.trackers, tracker] }));
+    return tracker;
   },
 
+  /* =========================
+     Update tracker (future use)
+  ========================= */
   updateTracker: async (trackerId, updates) => {
-    // TODO: Implement real API call
-    await new Promise(resolve => setTimeout(resolve, 300));
+    const updated = await apiFetch<Tracker>(
+      `/trackers/${trackerId}/`,
+      {
+        method: "PATCH",
+        body: JSON.stringify(updates),
+      }
+    );
+
     set(state => ({
-      trackers: state.trackers.map(tracker =>
-        tracker.id === trackerId ? { ...tracker, ...updates } : tracker
+      trackers: state.trackers.map(t =>
+        t.id === trackerId ? updated : t
       ),
     }));
   },
 
+  /* =========================
+     Delete tracker
+  ========================= */
   deleteTracker: async (trackerId) => {
-    // TODO: Implement real API call
-    await new Promise(resolve => setTimeout(resolve, 300));
+    await apiFetch(`/trackers/${trackerId}/`, {
+      method: "DELETE",
+    });
+
     set(state => ({
-      trackers: state.trackers.filter(tracker => tracker.id !== trackerId),
-      selectedTracker: state.selectedTracker?.id === trackerId ? null : state.selectedTracker,
+      trackers: state.trackers.filter(t => t.id !== trackerId),
+      selectedTracker:
+        state.selectedTracker?.id === trackerId
+          ? null
+          : state.selectedTracker,
     }));
   },
 
-  pushEntry: (trackerId, value) => {
-    set(state => {
-      const updatedTrackers = state.trackers.map(tracker =>
-        tracker.id === trackerId ? pushTrackerEntry(tracker, value) : tracker
-      );
-      const updatedTracker = updatedTrackers.find(t => t.id === trackerId);
-      return {
-        trackers: updatedTrackers,
-        selectedTracker: state.selectedTracker?.id === trackerId ? updatedTracker ?? null : state.selectedTracker,
-      };
+  /* =========================
+     Push entry (NO frontend logic)
+  ========================= */
+  pushEntry: async (trackerId, value) => {
+    await apiFetch(`/trackers/${trackerId}/push/`, {
+      method: "POST",
+      body: JSON.stringify({ value }),
     });
+
+    // Re-fetch trackers to stay backend-authoritative
+    const branchId = get().selectedTracker?.branchId;
+    if (branchId) {
+      await get().fetchTrackers(branchId);
+    }
+
+    // Refresh selected tracker reference
+    const updated = get().trackers.find(t => t.id === trackerId);
+    console.log("Updated tracker after pushEntry:", updated);
+    set({ selectedTracker: updated ?? null });
   },
+  fetchEntries: async (trackerId: number) => {
+    const data = await apiFetch<any[]>(`/trackers/${trackerId}/entries/`);
+
+    const entries = data.map(e => ({
+      id: e.id,
+      value: e.value,
+      createdAt: new Date(e.timestamp),
+    }));
+
+    set(state => ({
+      trackers: state.trackers.map(t =>
+        t.id === trackerId ? { ...t, entries } : t
+      ),
+      selectedTracker:
+        state.selectedTracker?.id === trackerId
+          ? { ...state.selectedTracker, entries }
+          : state.selectedTracker,
+    }));
+  },
+
 
   setSelectedTracker: (tracker) => {
     set({ selectedTracker: tracker });
   },
 
-  setTrackers: (trackers) => {
-    set({ trackers });
-  },
-
+  /* =========================
+     Selector
+  ========================= */
   getTrackersByBranch: (branchId) => {
-    return get().trackers.filter(tracker => tracker.branchId === branchId);
+    if (!branchId) return [];
+    return get().trackers.filter(t => t.branchId === branchId);
   },
 }));

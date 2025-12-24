@@ -2,12 +2,21 @@ import { create } from "zustand";
 import { apiFetch } from "@/lib/api";
 import { Task, TaskTimeMode } from "@/domains/models/task";
 
+function adaptTask(apiTask: any): Task {
+  return {
+    ...apiTask,
+    branchId: apiTask.branch,
+    branch: undefined,
+  };
+}
+
+
 interface TaskState {
   tasks: Task[];
   isLoading: boolean;
 
   // Actions
-  fetchTasks: () => Promise<void>;
+  fetchTasks: (branchId: number) => Promise<void>;
   createTask: (taskData: Omit<Task, 'id' | 'completed'>) => Promise<Task>;
   updateTask: (taskId: number, updates: Partial<Task>) => Promise<void>;
   deleteTask: (taskId: number) => Promise<void>;
@@ -26,22 +35,25 @@ export const useTaskStore = create<TaskState>((set, get) => ({
 
   // 🔹 Fetch tasks for a branch
   fetchTasks: async (branchId) => {
+    if(!branchId) return;
     set({ isLoading: true });
     const tasks = await apiFetch<Task[]>(`/tasks/?branch=${branchId}`);
-    set({ tasks, isLoading: false });
+
+    set({ tasks: tasks.map(adaptTask), isLoading: false });
+    // console.log("Fetching tasks for branch:", branchId, get().tasks);
   },
 
   // 🔹 Create task
   createTask: async (taskData) => {
-    // TODO: Implement real API call
-    await new Promise(resolve => setTimeout(resolve, 300));
-    const newTask: Task = {
-      ...taskData,
-      id: `task-${Date.now()}`,
-      completed: false,
-    };
-    set(state => ({ tasks: [...state.tasks, newTask] }));
-    return newTask;
+    // console.log("Creating task:", taskData);
+    const task = await apiFetch<Task>("/tasks/", {
+      method: "POST",
+      
+      body: JSON.stringify(taskData),
+    });
+
+    set(state => ({ tasks: [...state.tasks, task] }));
+    return task;
   },
 
   // 🔹 Generic update (future-proof)
@@ -117,6 +129,7 @@ export const useTaskStore = create<TaskState>((set, get) => ({
 
   // 🔹 Selector
   getTasksByBranch: (branchId) => {
+    // console.log("Getting tasks for branch:", branchId);
     if (!branchId) return [];
     return get().tasks.filter(task => task.branchId === branchId);
   },
