@@ -5,14 +5,10 @@ import {
   TrendingUp,
   TrendingDown,
   Play,
-  CheckCircle,
   Plus,
   BarChart3,
   Trash2,
-  Loader2,
   AlertCircle,
-  Target,
-  Percent,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -36,23 +32,10 @@ interface Analytics {
 }
 
 const displayModeIcons: Record<string, React.ReactNode> = {
-  sum: <Hash className="w-3.5 h-3.5" />,
-  average: <TrendingUp className="w-3.5 h-3.5" />,
-  max: <TrendingUp className="w-3.5 h-3.5" />,
-  min: <TrendingDown className="w-3.5 h-3.5" />,
-};
-
-const statusConfig: Record<string, { icon: React.ReactNode; color: string; bg: string }> = {
-  active: { 
-    icon: <Play className="w-3 h-3" />, 
-    color: "text-commit",
-    bg: "bg-commit/10"
-  },
-  dead: { 
-    icon: <CheckCircle className="w-3 h-3" />, 
-    color: "text-muted-foreground",
-    bg: "bg-muted/20"
-  },
+  sum: <Hash className="w-4 h-4" />,
+  average: <TrendingUp className="w-4 h-4" />,
+  max: <TrendingUp className="w-4 h-4" />,
+  min: <TrendingDown className="w-4 h-4" />,
 };
 
 export function TrackerCard({
@@ -68,9 +51,6 @@ export function TrackerCard({
   const [error, setError] = useState<string | null>(null);
   const [inputValue, setInputValue] = useState("");
 
-  /* =========================
-  Fetch analytics from backend
-  ========================= */
   useEffect(() => {
     let mounted = true;
     
@@ -117,12 +97,10 @@ export function TrackerCard({
   })();
 
   const contributesToScore = tracker.weight > 0 && tracker.target !== undefined;
-  const weightPercent = totalWeight > 0 ? Math.round((tracker.weight / totalWeight) * 100) : 0;
-
-  const progressPercent =
-    tracker.target && analytics
-      ? Math.min((analytics.max ?? 0) / tracker.target * 100, 100)
-      : 0;
+  const currentProgress = analytics?.max ?? 0;
+  const target = tracker.target ?? 0;
+  const progressPercent = target > 0 ? Math.min((currentProgress / target) * 100, 100) : 0;
+  const isAtLimit = progressPercent >= 100;
 
   const handlePush = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -138,9 +116,6 @@ export function TrackerCard({
     onDelete?.(tracker.id);
   };
 
-  const status = statusConfig[tracker.status] || statusConfig.active;
-
-  // Error state
   if (error) {
     return (
       <div className="p-4 bg-card border border-destructive/30 rounded-xl">
@@ -156,80 +131,66 @@ export function TrackerCard({
   return (
     <div
       className={cn(
-        "group p-4 bg-card border rounded-xl transition-all duration-200",
+        "group p-4 bg-card border border-border rounded-xl transition-all duration-200",
         "hover:border-commit/40 hover:shadow-lg hover:shadow-commit/5",
         tracker.status === "dead" && "opacity-60"
       )}
     >
-      {/* Header */}
+      {/* Header: Name + Value */}
       <button
         onClick={onClick}
         className="w-full text-left rounded focus:outline-none focus:ring-2 focus:ring-commit/30"
       >
         <div className="flex justify-between items-start gap-3">
-          <div className="flex items-start gap-3 min-w-0">
-            <div className={cn(
-              "p-2 rounded-lg transition-colors",
-              status.bg
-            )}>
+          <div className="flex items-center gap-2 min-w-0">
+            <span className="text-muted-foreground">
               {displayModeIcons[tracker.displayMode]}
-            </div>
-            <div className="min-w-0">
-              <span className="text-sm font-semibold truncate block">
-                {tracker.name}
-              </span>
-              <div className="flex items-center gap-2 mt-1">
-                <Badge variant="outline" className={cn("text-[10px] px-1.5 py-0", status.color)}>
-                  {status.icon}
-                  <span className="ml-1">{tracker.status}</span>
-                </Badge>
-                {contributesToScore && (
-                  <Badge variant="secondary" className="text-[10px] px-1.5 py-0 gap-1">
-                    <Percent className="w-2.5 h-2.5" />
-                    {weightPercent}% weight
-                  </Badge>
-                )}
-              </div>
-            </div>
+            </span>
+            <span className="text-sm font-semibold truncate">
+              {tracker.name}
+            </span>
+            {!contributesToScore && (
+              <Badge variant="outline" className="text-[10px] px-1.5 py-0 gap-1 text-muted-foreground border-muted-foreground/30">
+                <BarChart3 className="w-2.5 h-2.5" />
+                ANALYTICS
+              </Badge>
+            )}
           </div>
 
-          <div className="text-right">
+          <div className="flex items-center gap-2">
             {isLoading ? (
               <Skeleton className="h-7 w-12" />
             ) : (
-              <div className="font-mono text-xl font-bold text-commit">
+              <span className="font-mono text-2xl font-bold text-commit">
                 {displayValue}
-              </div>
+              </span>
             )}
-            <span className="text-[10px] text-muted-foreground font-mono">
-              {entryCount} entries
-            </span>
+            <Play className="w-4 h-4 text-commit fill-commit" />
           </div>
         </div>
       </button>
 
-      {/* Target progress */}
-      {tracker.target && analytics && (
-        <div className="mt-4">
-          <div className="flex justify-between items-center text-xs mb-1.5">
-            <span className="text-muted-foreground flex items-center gap-1">
-              <Target className="w-3 h-3" />
-              Target: {tracker.target}
+      {/* Progress bar */}
+      {tracker.target && (
+        <div className="mt-3">
+          <div className="flex justify-between items-center text-xs mb-1">
+            <span className="text-muted-foreground">
+              {contributesToScore ? "Progress:" : "Threshold:"} {currentProgress} / {target}
             </span>
             <span className={cn(
-              "font-mono font-medium",
-              progressPercent >= 100 ? "text-commit" : "text-foreground"
+              "font-mono text-xs",
+              isAtLimit ? "text-destructive" : "text-muted-foreground"
             )}>
-              {Math.round(progressPercent)}%
+              {isAtLimit ? (contributesToScore ? "100%" : "dies at limit") : `${Math.round(progressPercent)}%`}
             </span>
           </div>
-          <div className="h-2 bg-surface-3 rounded-full overflow-hidden">
+          <div className="h-1.5 bg-surface-3 rounded-full overflow-hidden">
             <div
               className={cn(
                 "h-full rounded-full transition-all duration-500",
-                progressPercent >= 100 
-                  ? "bg-gradient-to-r from-commit to-xp" 
-                  : "bg-commit/70"
+                isAtLimit 
+                  ? (contributesToScore ? "bg-commit" : "bg-destructive") 
+                  : "bg-commit"
               )}
               style={{ width: `${progressPercent}%` }}
             />
@@ -237,51 +198,57 @@ export function TrackerCard({
         </div>
       )}
 
-      {/* Push entry */}
-      {tracker.status === "active" && (
-        <div className="mt-4 pt-3 border-t border-border/50">
-          <div className="flex items-center gap-2">
-            <Input
-              type="number"
-              placeholder="0"
-              value={inputValue}
-              onChange={(e) => setInputValue(e.target.value)}
-              className="h-8 w-20 text-sm font-mono text-center"
-              onClick={e => e.stopPropagation()}
-            />
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={handlePush}
-              className="gap-1.5 h-8 text-xs hover:bg-commit hover:text-background hover:border-commit"
-            >
-              <Plus className="w-3.5 h-3.5" />
-              Push
-            </Button>
-            <div className="ml-auto">
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={handleDelete}
-                className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100 transition-opacity hover:text-destructive hover:bg-destructive/10"
-              >
-                <Trash2 className="w-3.5 h-3.5" />
-              </Button>
-            </div>
-          </div>
+      {/* Score contribution */}
+      {contributesToScore && (
+        <div className="mt-2 text-xs text-muted-foreground">
+          Score contribution: <span className="text-xp font-mono">{(tracker.weight / (totalWeight || 1)).toFixed(2)}</span> / {tracker.weight}
         </div>
       )}
 
-      {/* Footer mode label */}
-      <div className="mt-3 flex items-center justify-between">
-        <span className="text-[10px] font-mono uppercase text-muted-foreground/70">
-          {tracker.mode} · {tracker.displayMode}
-        </span>
-        {!contributesToScore && (
-          <span className="text-[9px] uppercase bg-surface-2 px-2 py-0.5 rounded flex items-center gap-1">
-            <BarChart3 className="w-2.5 h-2.5" />
-            analytics only
+      {/* Push entry section */}
+      {tracker.status === "active" && (
+        <div className="mt-4 flex items-center gap-2">
+          <Input
+            type="number"
+            placeholder="value"
+            value={inputValue}
+            onChange={(e) => setInputValue(e.target.value)}
+            className="h-8 w-20 text-sm font-mono bg-surface-2 border-border"
+            onClick={e => e.stopPropagation()}
+          />
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handlePush}
+            className="gap-1.5 h-8 text-xs text-muted-foreground hover:text-foreground"
+          >
+            <Plus className="w-3.5 h-3.5" />
+            Push Entry
+          </Button>
+          <span className="ml-auto text-xs text-muted-foreground font-mono">
+            {entryCount} entries
           </span>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={handleDelete}
+            className="h-8 w-8 p-0 opacity-0 group-hover:opacity-100 transition-opacity hover:text-destructive hover:bg-destructive/10"
+          >
+            <Trash2 className="w-3.5 h-3.5" />
+          </Button>
+        </div>
+      )}
+
+      {/* Footer badges */}
+      <div className="mt-3 flex items-center gap-2">
+        <Badge variant="secondary" className="text-[10px] px-2 py-0.5 font-mono uppercase bg-surface-2 text-muted-foreground">
+          {tracker.mode}:{tracker.displayMode}
+        </Badge>
+        {tracker.weight > 0 && (
+          <Badge variant="secondary" className="text-[10px] px-2 py-0.5 font-mono uppercase bg-surface-2">
+            <span className="text-muted-foreground">WEIGHT:</span>
+            <span className="text-xp ml-1">{tracker.weight}</span>
+          </Badge>
         )}
       </div>
     </div>
