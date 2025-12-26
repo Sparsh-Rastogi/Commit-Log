@@ -53,7 +53,7 @@ export function ContributionHeatmap({ data, onCellClick, interactive = false }: 
           {monthLabels.map((month, i) => (
             <div 
               key={month} 
-              className="text-[8px] text-muted-foreground"
+              className="text-[12px] text-muted-foreground"
               style={{ width: `${100 / 12}%` }}
             >
               {month}
@@ -64,9 +64,9 @@ export function ContributionHeatmap({ data, onCellClick, interactive = false }: 
 
       <div className="flex gap-0.5">
         {/* Day labels */}
-        <div className="flex flex-col gap-[2px] pr-1">
+        <div className="flex flex-col gap-[5px] pr-1">
           {dayLabels.map((day, i) => (
-            <div key={i} className="h-[8px] text-[7px] text-muted-foreground flex items-center">
+            <div key={i} className="h-[8px] text-[12px] text-muted-foreground flex items-center">
               {day}
             </div>
           ))}
@@ -83,7 +83,7 @@ export function ContributionHeatmap({ data, onCellClick, interactive = false }: 
                     key={`${weekIndex}-${dayIndex}`}
                     onClick={() => interactive && onCellClick?.(dateKey, level)}
                     className={cn(
-                      "w-[8px] h-[8px] rounded-[2px] transition-all duration-200",
+                      "w-[12px] h-[12px] rounded-[2px] transition-all duration-200",
                       levelColors[level] || levelColors[0],
                       interactive && "cursor-pointer hover:ring-2 hover:ring-accent hover:ring-offset-1 hover:ring-offset-background"
                     )}
