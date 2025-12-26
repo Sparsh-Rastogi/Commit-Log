@@ -8,9 +8,11 @@ import {
   Plus,
   GitMerge,
   Loader2,
+  AlertCircle,
 } from "lucide-react";
 import { useMemo } from "react";
 import { Button } from "@/components/ui/button";
+import { Skeleton } from "@/components/ui/skeleton";
 
 /* ======================================================
    Branch Score Calculation (mirrors backend logic)
@@ -80,6 +82,7 @@ interface MainContentProps {
   onRemoveTaskDate?: (id: number) => void;
   onPullCommit?: () => void;
   isPulling?: boolean;
+  isLoading?: boolean;
 }
 
 export function MainContent({
@@ -96,6 +99,7 @@ export function MainContent({
   onRemoveTaskDate,
   onPullCommit,
   isPulling = false,
+  isLoading = false,
 }: MainContentProps) {
   /* =========================
      Branch-scoped data

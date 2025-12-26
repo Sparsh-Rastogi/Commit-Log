@@ -17,6 +17,7 @@ import {
 import { Task, Tracker } from "@/types";
 import { TrackerMode, TrackerDisplay } from "@/domains/models/tracker";
 import { useToast } from "@/hooks/use-toast";
+import { Loader2 } from "lucide-react";
 
 const Index = () => {
   const { toast } = useToast();
@@ -24,14 +25,13 @@ const Index = () => {
   /* =======================
      Auth Store
   ======================= */
-  // const { user, checkAuth } = useAuthStore();
   const user = useAuthStore(state => state.user);
-  const checkAuth = useAuthStore(state => state.checkAuth); 
+  const checkAuth = useAuthStore(state => state.checkAuth);
+  const isAuthLoading = useAuthStore(state => state.isLoading);
 
   /* =======================
      Branch Store
   ======================= */
-
   const branches = useBranchStore(state => state.branches);
   const currentBranchId = useBranchStore(state => state.currentBranchId);
   const selectBranch = useBranchStore(state => state.selectBranch);
@@ -39,25 +39,20 @@ const Index = () => {
   const createBranch = useBranchStore(state => state.createBranch);
   const getCurrentBranch = useBranchStore(state => state.getCurrentBranch);
   const pullBranch = useBranchStore(state => state.pullBranch);
-  const isPulling = useBranchStore(state => state.isPulling); 
+  const isPulling = useBranchStore(state => state.isPulling);
+  const isBranchLoading = useBranchStore(state => state.isLoading);
 
   /* =======================
      Task Store
   ======================= */
-  // const {
-  //   tasks,
-  //   fetchTasks,
-  //   createTask,
-  //   toggleTask,
-  //   postponeTask,
-  //   removeTaskDate,
-  // } = useTaskStore();
   const tasks = useTaskStore(state => state.tasks);
   const fetchTasks = useTaskStore(state => state.fetchTasks);
   const createTask = useTaskStore(state => state.createTask);
   const toggleTask = useTaskStore(state => state.toggleTask);
   const postponeTask = useTaskStore(state => state.postponeTask);
   const removeTaskDate = useTaskStore(state => state.removeTaskDate);
+  const isTaskLoading = useTaskStore(state => state.isLoading);
+
   /* =======================
      Tracker Store
   ======================= */
@@ -68,6 +63,7 @@ const Index = () => {
   const createTracker = useTrackerStore(state => state.createTracker);
   const deleteTracker = useTrackerStore(state => state.deleteTracker);
   const pushEntry = useTrackerStore(state => state.pushEntry);
+  const isTrackerLoading = useTrackerStore(state => state.isLoading);
 
   /* =======================
      Modal State
@@ -90,34 +86,39 @@ const Index = () => {
   /* =======================
      App Initialization
   ======================= */
-  // AUTH bootstrap
+  // AUTH bootstrap - runs once
   useEffect(() => {
     checkAuth();
-    // console.log("Auth checked");
   }, [checkAuth]);
 
-  // DATA bootstrap
+  // BRANCHES bootstrap - runs once after auth
   useEffect(() => {
-    // if (!currentBranchId) return;
-    
-    fetchBranches();
-    console.log("Fetching branches...");
-    // console.log(currentBranchId);
-    setCurrentBranch(getCurrentBranch() || null);
-    console.log("Branches fetched");
-    fetchTasks(currentBranchId);
-    console.log(tasks)
-    fetchTrackers(currentBranchId);
-  }, [currentBranchId]);
+    if (!isAuthLoading) {
+      fetchBranches();
+    }
+  }, [isAuthLoading, fetchBranches]);
 
-  const [currentBranch, setCurrentBranch] = useState(null);
-  // const currentBranch = getCurrentBranch();
-  // console.log("Current Branch:", currentBranch);
+  // TASKS & TRACKERS - fetch when branch changes
+  useEffect(() => {
+    if (currentBranchId) {
+      fetchTasks(currentBranchId);
+      fetchTrackers(currentBranchId);
+    }
+  }, [currentBranchId, fetchTasks, fetchTrackers]);
 
-  if (!currentBranch) {
+  // Derive current branch from store
+  const currentBranch = getCurrentBranch();
+
+  // Loading state
+  const isInitialLoading = isAuthLoading || isBranchLoading || !currentBranch;
+
+  if (isInitialLoading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
-        <span className="text-muted-foreground">Loading...</span>
+        <div className="flex flex-col items-center gap-3">
+          <Loader2 className="w-8 h-8 animate-spin text-commit" />
+          <span className="text-sm text-muted-foreground">Loading...</span>
+        </div>
       </div>
     );
   }
@@ -261,6 +262,7 @@ const Index = () => {
         onRemoveTaskDate={handleRemoveTaskDate}
         onPullCommit={handlePullCommitClick}
         isPulling={isPulling}
+        isLoading={isTaskLoading || isTrackerLoading}
       />
 
       <NewCommitModal
