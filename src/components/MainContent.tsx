@@ -72,6 +72,7 @@ interface MainContentProps {
   currentBranch: Branch;
   tasks: Task[];
   trackers: Tracker[];
+  totalTrackerWeight: number;
   onTaskToggle: (id: number) => void;
   onTrackerClick: (tracker: Tracker) => void;
   onPushEntry?: (trackerId: number, value: number) => void;
@@ -89,6 +90,7 @@ export function MainContent({
   currentBranch,
   tasks,
   trackers,
+  totalTrackerWeight,
   onTaskToggle,
   onTrackerClick,
   onPushEntry,
@@ -217,11 +219,12 @@ export function MainContent({
           onAdd={onAddTracker}
         >
           {branchTrackers.length ? (
-            <div className="grid sm:grid-cols-2 gap-3">
+            <div className="grid sm:grid-cols-2 gap-4">
               {branchTrackers.map(tracker => (
                 <TrackerCard
                   key={tracker.id}
                   tracker={tracker}
+                  totalWeight={totalTrackerWeight}
                   onClick={() => onTrackerClick(tracker)}
                   onPushEntry={onPushEntry}
                   onDelete={onDeleteTracker}

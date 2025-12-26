@@ -10,6 +10,7 @@ interface SidebarProps {
   currentBranchId: number | null;
   onBranchSelect: (branchId: number | null) => void;
   onNewCommit: () => void;
+  onLogout?: () => void;
 }
 
 export function Sidebar({ 
@@ -17,11 +18,12 @@ export function Sidebar({
   branches, 
   currentBranchId, 
   onBranchSelect, 
-  onNewCommit 
+  onNewCommit,
+  onLogout,
 }: SidebarProps) {
   return (
     <aside className="w-64 h-screen flex flex-col bg-sidebar border-r border-sidebar-border">
-      <ProfileSection user={user} />
+      <ProfileSection user={user} onLogout={onLogout} />
       
       <BranchList 
         branches={branches}

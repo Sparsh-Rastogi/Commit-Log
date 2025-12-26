@@ -14,10 +14,15 @@ import {
   Plus,
   Loader2,
   AlertCircle,
+  TrendingUp,
+  TrendingDown,
+  Target,
+  Flame,
+  Calendar,
 } from "lucide-react";
 import { apiFetch } from "@/lib/api";
 import { format } from "date-fns";
-import { Skeleton } from "@/components/ui/skeleton";
+import { cn } from "@/lib/utils";
 
 /* ============================
    Types
@@ -162,16 +167,23 @@ export function TrackerAnalyticsModal({
   ============================ */
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-4xl max-h-[90vh] flex flex-col">
-        <DialogHeader>
-          <DialogTitle className="flex justify-between">
-            <div className="flex items-center gap-2">
-              <BarChart3 className="w-5 h-5 text-accent" />
-              {tracker.name} Analytics
+      <DialogContent className="sm:max-w-3xl max-h-[85vh] flex flex-col p-0 gap-0">
+        <DialogHeader className="p-6 pb-4 border-b">
+          <DialogTitle className="flex justify-between items-center">
+            <div className="flex items-center gap-3">
+              <div className="p-2 rounded-lg bg-commit/10">
+                <BarChart3 className="w-5 h-5 text-commit" />
+              </div>
+              <div>
+                <h2 className="text-lg font-semibold">{tracker.name}</h2>
+                <p className="text-xs text-muted-foreground font-normal">
+                  {tracker.mode} · {tracker.displayMode}
+                </p>
+              </div>
             </div>
             <Button
               size="sm"
-              className="gap-1 bg-commit text-background"
+              className="gap-1.5 bg-commit hover:bg-commit/90"
               onClick={() => onPushEntry?.(tracker.id, 1)}
             >
               <Plus className="w-4 h-4" />
@@ -180,19 +192,19 @@ export function TrackerAnalyticsModal({
           </DialogTitle>
         </DialogHeader>
 
-        <ScrollArea className="flex-1">
+        <ScrollArea className="flex-1 p-6">
           {/* Loading State */}
           {isLoading && (
-            <div className="flex flex-col items-center justify-center py-12 gap-3">
-              <Loader2 className="w-6 h-6 animate-spin text-commit" />
+            <div className="flex flex-col items-center justify-center py-16 gap-3">
+              <Loader2 className="w-8 h-8 animate-spin text-commit" />
               <span className="text-sm text-muted-foreground">Loading analytics...</span>
             </div>
           )}
 
           {/* Error State */}
           {error && !isLoading && (
-            <div className="flex flex-col items-center justify-center py-12 gap-3">
-              <AlertCircle className="w-6 h-6 text-destructive" />
+            <div className="flex flex-col items-center justify-center py-16 gap-3">
+              <AlertCircle className="w-8 h-8 text-destructive" />
               <span className="text-sm text-destructive">{error}</span>
             </div>
           )}
@@ -201,17 +213,58 @@ export function TrackerAnalyticsModal({
           {!isLoading && !error && (
             <div className="space-y-6">
 
-              {/* Stats */}
-              <div className="grid grid-cols-4 gap-3">
-                <Stat label="Max" value={analytics?.max ?? 0} />
-                <Stat label="Min" value={analytics?.min ?? 0} />
-                <Stat label="Avg" value={Math.round(analytics?.avg ?? 0)} />
-                <Stat label="Entries" value={entries.length} />
+              {/* Stats Grid */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <StatCard 
+                  icon={<TrendingUp className="w-4 h-4" />}
+                  label="Maximum" 
+                  value={analytics?.max ?? 0} 
+                  color="text-commit"
+                />
+                <StatCard 
+                  icon={<TrendingDown className="w-4 h-4" />}
+                  label="Minimum" 
+                  value={analytics?.min ?? 0} 
+                  color="text-muted-foreground"
+                />
+                <StatCard 
+                  icon={<Target className="w-4 h-4" />}
+                  label="Average" 
+                  value={Math.round(analytics?.avg ?? 0)} 
+                  color="text-xp"
+                />
+                <StatCard 
+                  icon={<Calendar className="w-4 h-4" />}
+                  label="Entries" 
+                  value={entries.length} 
+                  color="text-foreground"
+                />
+              </div>
+
+              {/* Streaks */}
+              <div className="grid grid-cols-2 gap-3">
+                <div className="p-4 border rounded-xl bg-gradient-to-br from-orange-500/5 to-transparent">
+                  <div className="flex items-center gap-2 text-orange-500 mb-1">
+                    <Flame className="w-4 h-4" />
+                    <span className="text-xs font-medium">Current Streak</span>
+                  </div>
+                  <div className="font-mono text-2xl font-bold">{streaks.current} <span className="text-sm font-normal text-muted-foreground">days</span></div>
+                </div>
+                <div className="p-4 border rounded-xl bg-gradient-to-br from-commit/5 to-transparent">
+                  <div className="flex items-center gap-2 text-commit mb-1">
+                    <Flame className="w-4 h-4" />
+                    <span className="text-xs font-medium">Longest Streak</span>
+                  </div>
+                  <div className="font-mono text-2xl font-bold">{streaks.longest} <span className="text-sm font-normal text-muted-foreground">days</span></div>
+                </div>
               </div>
 
               {/* Heatmap */}
-              <div className="p-4 border rounded-lg">
-                <h3 className="text-sm font-medium mb-3">Activity (last year)</h3>
+              <div className="p-4 border rounded-xl">
+                <h3 className="text-sm font-medium mb-4 flex items-center gap-2">
+                  <Calendar className="w-4 h-4 text-muted-foreground" />
+                  Activity (last 52 weeks)
+                </h3>
                 <ContributionHeatmap
                   data={heatmapGrid}
                   interactive
@@ -221,7 +274,7 @@ export function TrackerAnalyticsModal({
                 />
 
                 {selectedDate && (
-                  <div className="mt-3 flex justify-between items-center p-2 bg-surface-2 rounded">
+                  <div className="mt-4 flex justify-between items-center p-3 bg-surface-2 rounded-lg border">
                     <span className="font-mono text-sm">{selectedDate}</span>
                     <span className="font-mono font-bold text-commit">
                       {heatmap.get(selectedDate) ?? 0} total
@@ -230,31 +283,25 @@ export function TrackerAnalyticsModal({
                 )}
               </div>
 
-              {/* Entries */}
-              <div className="p-4 border rounded-lg">
+              {/* Recent Entries */}
+              <div className="p-4 border rounded-xl">
                 <h3 className="text-sm font-medium mb-3">Recent Entries</h3>
                 {entries.length === 0 ? (
-                  <p className="text-sm text-muted-foreground text-center py-4">
+                  <p className="text-sm text-muted-foreground text-center py-8">
                     No entries yet. Push your first entry!
                   </p>
                 ) : (
-                  <div className="space-y-1 max-h-48 overflow-y-auto scrollbar-thin">
-                    {entries.slice(0, 30).map(e => (
-                      <div key={e.id} className="flex justify-between text-sm py-1.5 px-2 hover:bg-surface-2 rounded">
+                  <div className="space-y-1 max-h-56 overflow-y-auto">
+                    {entries.slice(0, 50).map(e => (
+                      <div key={e.id} className="flex justify-between text-sm py-2 px-3 hover:bg-surface-2 rounded-lg transition-colors">
                         <span className="font-mono text-muted-foreground">
-                          {format(new Date(e.timestamp), "MMM d, yyyy HH:mm")}
+                          {format(new Date(e.timestamp), "MMM d, yyyy · HH:mm")}
                         </span>
-                        <span className="font-mono font-medium">{e.value}</span>
+                        <span className="font-mono font-semibold text-commit">+{e.value}</span>
                       </div>
                     ))}
                   </div>
                 )}
-              </div>
-
-              {/* Streaks */}
-              <div className="grid grid-cols-2 gap-3">
-                <Stat label="Current Streak" value={`${streaks.current} days`} />
-                <Stat label="Longest Streak" value={`${streaks.longest} days`} />
               </div>
 
             </div>
@@ -266,19 +313,26 @@ export function TrackerAnalyticsModal({
 }
 
 /* ============================
-   Helper
+   Helper Components
 ============================ */
-function Stat({
+function StatCard({
+  icon,
   label,
   value,
+  color,
 }: {
+  icon: React.ReactNode;
   label: string;
   value: string | number;
+  color: string;
 }) {
   return (
-    <div className="p-3 border rounded-lg bg-surface-1">
-      <div className="text-xs text-muted-foreground">{label}</div>
-      <div className="font-mono text-lg font-medium">{value}</div>
+    <div className="p-4 border rounded-xl bg-card">
+      <div className={cn("flex items-center gap-2 mb-1", color)}>
+        {icon}
+        <span className="text-xs text-muted-foreground">{label}</span>
+      </div>
+      <div className="font-mono text-xl font-bold">{value}</div>
     </div>
   );
 }

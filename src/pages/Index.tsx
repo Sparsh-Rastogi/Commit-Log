@@ -13,7 +13,7 @@ import {
   useTaskStore,
   useTrackerStore,
 } from "@/stores";
-
+import { useNavigate } from "react-router-dom";
 import { Task, Tracker } from "@/types";
 import { TrackerMode, TrackerDisplay } from "@/domains/models/tracker";
 import { useToast } from "@/hooks/use-toast";
@@ -21,12 +21,14 @@ import { Loader2 } from "lucide-react";
 
 const Index = () => {
   const { toast } = useToast();
+  const navigate = useNavigate();
 
   /* =======================
      Auth Store
   ======================= */
   const user = useAuthStore(state => state.user);
   const checkAuth = useAuthStore(state => state.checkAuth);
+  const logout = useAuthStore(state => state.logout);
   const isAuthLoading = useAuthStore(state => state.isLoading);
 
   /* =======================
@@ -229,11 +231,24 @@ const Index = () => {
   };
 
   /* =======================
+     Logout Handler
+  ======================= */
+  const handleLogout = async () => {
+    await logout();
+    navigate("/auth");
+  };
+
+  /* =======================
      Sidebar User
   ======================= */
   const userProfile = user
     ? { username: user.username, level: user.level, xp: user.xp }
     : { username: "Guest", level: 1, xp: 0 };
+
+  /* =======================
+     Calculate total tracker weight for percentage display
+  ======================= */
+  const totalTrackerWeight = trackers.reduce((sum, t) => sum + (t.weight || 0), 0);
 
   /* =======================
      Render
@@ -246,12 +261,14 @@ const Index = () => {
         currentBranchId={currentBranchId}
         onBranchSelect={handleBranchSelect}
         onNewCommit={() => setNewCommitModalOpen(true)}
+        onLogout={handleLogout}
       />
 
       <MainContent
         currentBranch={currentBranch}
         tasks={tasks}
         trackers={trackers}
+        totalTrackerWeight={totalTrackerWeight}
         onTaskToggle={handleTaskToggle}
         onTrackerClick={handleTrackerClick}
         onPushEntry={handlePushEntry}
