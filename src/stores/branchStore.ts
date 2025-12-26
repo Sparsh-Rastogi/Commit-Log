@@ -41,15 +41,26 @@ export const useBranchStore = create<BranchState>((set, get) => ({
 
   fetchBranches: async () => {
     set({ isLoading: true });
-    const branches = await apiFetch<Branch[]>("/branches/");
-    const mainBranch = branches.find(b => b.is_main);
-    // console.log("Main branch:", mainBranch);
-    console.log("Fetched branches:", branches.find(b => b.id === get().currentBranchId));
-    set({
-      branches,
-      currentBranchId: get().currentBranchId? get().currentBranchId : mainBranch ? mainBranch.id : null,
-      isLoading: false,
-    });
+    try {
+      const branches = await apiFetch<Branch[]>("/branches/");
+      const { currentBranchId } = get();
+      const mainBranch = branches.find(b => b.is_main);
+      
+      // Only set to main if no branch is currently selected OR current branch no longer exists
+      const branchStillExists = branches.some(b => b.id === currentBranchId);
+      const newBranchId = branchStillExists && currentBranchId 
+        ? currentBranchId 
+        : mainBranch?.id ?? null;
+
+      set({
+        branches,
+        currentBranchId: newBranchId,
+        isLoading: false,
+      });
+    } catch (error) {
+      console.error("Failed to fetch branches:", error);
+      set({ isLoading: false });
+    }
   },
 
   createBranch: async (name, description) => {
@@ -115,9 +126,9 @@ export const useBranchStore = create<BranchState>((set, get) => ({
 
   getCurrentBranch: () => {
     const { branches, currentBranchId } = get();
-    // console.log(branches);
-    console.log("Getting current branch for ID:", currentBranchId);
-    // if(currentBranchId === null) return branches.find(b => b.is_main);
+    if (currentBranchId === null) {
+      return branches.find(b => b.is_main);
+    }
     return branches.find(b => b.id === currentBranchId);
   },
 }));

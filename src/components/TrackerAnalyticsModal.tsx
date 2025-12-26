@@ -10,15 +10,14 @@ import { Button } from "@/components/ui/button";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { ContributionHeatmap } from "./ContributionHeatmap";
 import {
-  TrendingUp,
-  TrendingDown,
-  Minus,
   BarChart3,
   Plus,
-  X,
+  Loader2,
+  AlertCircle,
 } from "lucide-react";
 import { apiFetch } from "@/lib/api";
 import { format } from "date-fns";
+import { Skeleton } from "@/components/ui/skeleton";
 
 /* ============================
    Types
@@ -61,24 +60,34 @@ export function TrackerAnalyticsModal({
   const [entries, setEntries] = useState<Entry[]>([]);
   const [heatmap, setHeatmap] = useState<Map<string, number>>(new Map());
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   /* ---------- Effects ---------- */
   useEffect(() => {
     if (!tracker || !open) return;
 
     const fetchData = async () => {
-      const [analyticsRes, entriesRes, heatmapRes] = await Promise.all([
-        apiFetch<Analytics>(`/trackers/${tracker.id}/analytics/`),
-        apiFetch<Entry[]>(`/trackers/${tracker.id}/entries/`),
-        apiFetch<HeatmapPoint[]>(`/trackers/${tracker.id}/heatmap/`),
-      ]);
+      setIsLoading(true);
+      setError(null);
+      try {
+        const [analyticsRes, entriesRes, heatmapRes] = await Promise.all([
+          apiFetch<Analytics>(`/trackers/${tracker.id}/analytics/`),
+          apiFetch<Entry[]>(`/trackers/${tracker.id}/entries/`),
+          apiFetch<HeatmapPoint[]>(`/trackers/${tracker.id}/heatmap/`),
+        ]);
 
-      setAnalytics(analyticsRes);
-      setEntries(entriesRes);
+        setAnalytics(analyticsRes);
+        setEntries(entriesRes);
 
-      const map = new Map<string, number>();
-      heatmapRes.forEach(d => map.set(d.day, d.total));
-      setHeatmap(map);
+        const map = new Map<string, number>();
+        heatmapRes.forEach(d => map.set(d.day, d.total));
+        setHeatmap(map);
+      } catch (err) {
+        setError("Failed to load analytics data");
+      } finally {
+        setIsLoading(false);
+      }
     };
 
     fetchData();
@@ -172,61 +181,84 @@ export function TrackerAnalyticsModal({
         </DialogHeader>
 
         <ScrollArea className="flex-1">
-          <div className="space-y-6">
-
-            {/* Stats */}
-            <div className="grid grid-cols-4 gap-3">
-              <Stat label="Max" value={analytics?.max ?? 0} />
-              <Stat label="Min" value={analytics?.min ?? 0} />
-              <Stat label="Avg" value={Math.round(analytics?.avg ?? 0)} />
-              <Stat label="Entries" value={entries.length} />
+          {/* Loading State */}
+          {isLoading && (
+            <div className="flex flex-col items-center justify-center py-12 gap-3">
+              <Loader2 className="w-6 h-6 animate-spin text-commit" />
+              <span className="text-sm text-muted-foreground">Loading analytics...</span>
             </div>
+          )}
 
-            {/* Heatmap */}
-            <div className="p-4 border rounded-lg">
-              <h3 className="text-sm mb-3">Activity (last year)</h3>
-              <ContributionHeatmap
-                data={heatmapGrid}
-                interactive
-                onCellClick={date =>
-                  setSelectedDate(date === selectedDate ? null : date)
-                }
-              />
-
-              {selectedDate && (
-                <div className="mt-3 flex justify-between">
-                  <span className="font-mono text-sm">{selectedDate}</span>
-                  <span className="font-mono font-bold text-commit">
-                    {heatmap.get(selectedDate) ?? 0}
-                  </span>
-                </div>
-              )}
+          {/* Error State */}
+          {error && !isLoading && (
+            <div className="flex flex-col items-center justify-center py-12 gap-3">
+              <AlertCircle className="w-6 h-6 text-destructive" />
+              <span className="text-sm text-destructive">{error}</span>
             </div>
+          )}
 
-            {/* Entries */}
-            <div className="p-4 border rounded-lg">
-              <h3 className="text-sm mb-3">Recent Entries</h3>
-              {entries.length === 0 ? (
-                <p className="text-sm text-muted-foreground">No entries</p>
-              ) : (
-                entries.slice(0, 30).map(e => (
-                  <div key={e.id} className="flex justify-between text-sm py-1">
-                    <span className="font-mono">
-                      {format(new Date(e.timestamp), "MMM d, yyyy")}
+          {/* Content */}
+          {!isLoading && !error && (
+            <div className="space-y-6">
+
+              {/* Stats */}
+              <div className="grid grid-cols-4 gap-3">
+                <Stat label="Max" value={analytics?.max ?? 0} />
+                <Stat label="Min" value={analytics?.min ?? 0} />
+                <Stat label="Avg" value={Math.round(analytics?.avg ?? 0)} />
+                <Stat label="Entries" value={entries.length} />
+              </div>
+
+              {/* Heatmap */}
+              <div className="p-4 border rounded-lg">
+                <h3 className="text-sm font-medium mb-3">Activity (last year)</h3>
+                <ContributionHeatmap
+                  data={heatmapGrid}
+                  interactive
+                  onCellClick={date =>
+                    setSelectedDate(date === selectedDate ? null : date)
+                  }
+                />
+
+                {selectedDate && (
+                  <div className="mt-3 flex justify-between items-center p-2 bg-surface-2 rounded">
+                    <span className="font-mono text-sm">{selectedDate}</span>
+                    <span className="font-mono font-bold text-commit">
+                      {heatmap.get(selectedDate) ?? 0} total
                     </span>
-                    <span className="font-mono">{e.value}</span>
                   </div>
-                ))
-              )}
-            </div>
+                )}
+              </div>
 
-            {/* Streaks */}
-            <div className="grid grid-cols-2 gap-3">
-              <Stat label="Current Streak" value={`${streaks.current} days`} />
-              <Stat label="Longest Streak" value={`${streaks.longest} days`} />
-            </div>
+              {/* Entries */}
+              <div className="p-4 border rounded-lg">
+                <h3 className="text-sm font-medium mb-3">Recent Entries</h3>
+                {entries.length === 0 ? (
+                  <p className="text-sm text-muted-foreground text-center py-4">
+                    No entries yet. Push your first entry!
+                  </p>
+                ) : (
+                  <div className="space-y-1 max-h-48 overflow-y-auto scrollbar-thin">
+                    {entries.slice(0, 30).map(e => (
+                      <div key={e.id} className="flex justify-between text-sm py-1.5 px-2 hover:bg-surface-2 rounded">
+                        <span className="font-mono text-muted-foreground">
+                          {format(new Date(e.timestamp), "MMM d, yyyy HH:mm")}
+                        </span>
+                        <span className="font-mono font-medium">{e.value}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
 
-          </div>
+              {/* Streaks */}
+              <div className="grid grid-cols-2 gap-3">
+                <Stat label="Current Streak" value={`${streaks.current} days`} />
+                <Stat label="Longest Streak" value={`${streaks.longest} days`} />
+              </div>
+
+            </div>
+          )}
         </ScrollArea>
       </DialogContent>
     </Dialog>
@@ -244,9 +276,9 @@ function Stat({
   value: string | number;
 }) {
   return (
-    <div className="p-3 border rounded-lg">
+    <div className="p-3 border rounded-lg bg-surface-1">
       <div className="text-xs text-muted-foreground">{label}</div>
-      <div className="font-mono text-lg">{value}</div>
+      <div className="font-mono text-lg font-medium">{value}</div>
     </div>
   );
 }

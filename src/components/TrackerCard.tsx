@@ -9,11 +9,14 @@ import {
   Plus,
   BarChart3,
   Trash2,
+  Loader2,
+  AlertCircle,
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { useEffect, useState } from "react";
 import { apiFetch } from "@/lib/api";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface TrackerCardProps {
   tracker: Tracker;
@@ -53,6 +56,9 @@ export function TrackerCard({
 }: TrackerCardProps) {
   const [analytics, setAnalytics] = useState<Analytics | null>(null);
   const [entryCount, setEntryCount] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
   /* =========================
   Fetch analytics from backend
   ========================= */
@@ -60,14 +66,23 @@ export function TrackerCard({
     let mounted = true;
     
     const fetchAnalytics = async () => {
-      const [a, entries] = await Promise.all([
-        apiFetch<Analytics>(`/trackers/${tracker.id}/analytics/`),
-        apiFetch<any[]>(`/trackers/${tracker.id}/entries/`),
-      ]);
-      
-      if (!mounted) return;
-      setAnalytics(a);
-      setEntryCount(entries.length);
+      setIsLoading(true);
+      setError(null);
+      try {
+        const [a, entries] = await Promise.all([
+          apiFetch<Analytics>(`/trackers/${tracker.id}/analytics/`),
+          apiFetch<any[]>(`/trackers/${tracker.id}/entries/`),
+        ]);
+        
+        if (!mounted) return;
+        setAnalytics(a);
+        setEntryCount(entries.length);
+      } catch (err) {
+        if (!mounted) return;
+        setError("Failed to load");
+      } finally {
+        if (mounted) setIsLoading(false);
+      }
     };
     
     fetchAnalytics();
@@ -75,13 +90,12 @@ export function TrackerCard({
       mounted = false;
     };
   }, [tracker.id]);
-  
-  console.log(analytics?? "No analytics", tracker.name);
+
   const displayValue = (() => {
     if (!analytics) return 0;
     switch (tracker.displayMode) {
       case "sum":
-        return analytics.max ?? 0; // backend handles SUM logic
+        return analytics.max ?? 0;
       case "max":
         return analytics.max ?? 0;
       case "min":
@@ -116,7 +130,20 @@ export function TrackerCard({
     e.stopPropagation();
     onDelete?.(tracker.id);
   };
-  console.log(tracker);
+
+  // Error state
+  if (error) {
+    return (
+      <div className="p-3 bg-card border border-destructive/30 rounded-lg">
+        <div className="flex items-center gap-2 text-destructive">
+          <AlertCircle className="w-4 h-4" />
+          <span className="text-sm">{tracker.name}</span>
+        </div>
+        <p className="text-xs text-muted-foreground mt-1">{error}</p>
+      </div>
+    );
+  }
+
   return (
     <div
       className={cn(
@@ -146,9 +173,13 @@ export function TrackerCard({
           </div>
 
           <div className="flex items-center gap-2">
-            <span className="font-mono text-lg">
-              {displayValue}
-            </span>
+            {isLoading ? (
+              <Skeleton className="h-6 w-8" />
+            ) : (
+              <span className="font-mono text-lg">
+                {displayValue}
+              </span>
+            )}
             <div className={statusColors[tracker.status]}>
               {statusIcons[tracker.status]}
             </div>
