@@ -60,7 +60,6 @@ export function TrackerAnalyticsModal({
   onOpenChange,
   onPushEntry,
 }: TrackerAnalyticsModalProps) {
-  /* ---------- State (ALWAYS declared) ---------- */
   const [analytics, setAnalytics] = useState<Analytics | null>(null);
   const [entries, setEntries] = useState<Entry[]>([]);
   const [heatmap, setHeatmap] = useState<Map<string, number>>(new Map());
@@ -68,7 +67,6 @@ export function TrackerAnalyticsModal({
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  /* ---------- Effects ---------- */
   useEffect(() => {
     if (!tracker || !open) return;
 
@@ -86,7 +84,7 @@ export function TrackerAnalyticsModal({
         setEntries(entriesRes);
 
         const map = new Map<string, number>();
-        heatmapRes.forEach(d => map.set(d.day, d.total));
+        heatmapRes.forEach((d) => map.set(d.day, d.total));
         setHeatmap(map);
       } catch (err) {
         setError("Failed to load analytics data");
@@ -98,7 +96,6 @@ export function TrackerAnalyticsModal({
     fetchData();
   }, [tracker?.id, open]);
 
-  /* ---------- Derived data ---------- */
   const heatmapGrid = useMemo(() => {
     if (!tracker) return [];
 
@@ -159,16 +156,16 @@ export function TrackerAnalyticsModal({
     return { current, longest };
   }, [tracker, heatmap]);
 
-  /* ---------- Guard AFTER hooks ---------- */
   if (!tracker) return null;
 
   /* ============================
-     Render
+      Render
   ============================ */
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-3xl max-h-[85vh] flex flex-col p-0 gap-0">
-        <DialogHeader className="p-6 pb-4 border-b">
+      {/* make body scrollable within max height */}
+      <DialogContent className="sm:max-w-5xl max-h-[85vh] flex flex-col overflow-hidden p-0 gap-0">
+        <DialogHeader className="p-6 pb-4 border-b shrink-0">
           <DialogTitle className="flex justify-between items-center">
             <div className="flex items-center gap-3">
               <div className="p-2 rounded-lg bg-commit/10">
@@ -192,12 +189,14 @@ export function TrackerAnalyticsModal({
           </DialogTitle>
         </DialogHeader>
 
-        <ScrollArea className="flex-1 p-6">
+        <ScrollArea className="flex-1 p-6 overflow-y-auto">
           {/* Loading State */}
           {isLoading && (
             <div className="flex flex-col items-center justify-center py-16 gap-3">
               <Loader2 className="w-8 h-8 animate-spin text-commit" />
-              <span className="text-sm text-muted-foreground">Loading analytics...</span>
+              <span className="text-sm text-muted-foreground">
+                Loading analytics...
+              </span>
             </div>
           )}
 
@@ -212,31 +211,30 @@ export function TrackerAnalyticsModal({
           {/* Content */}
           {!isLoading && !error && (
             <div className="space-y-6">
-
               {/* Stats Grid */}
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-                <StatCard 
+                <StatCard
                   icon={<TrendingUp className="w-4 h-4" />}
-                  label="Maximum" 
-                  value={analytics?.max ?? 0} 
+                  label="Maximum"
+                  value={analytics?.max ?? 0}
                   color="text-commit"
                 />
-                <StatCard 
+                <StatCard
                   icon={<TrendingDown className="w-4 h-4" />}
-                  label="Minimum" 
-                  value={analytics?.min ?? 0} 
+                  label="Minimum"
+                  value={analytics?.min ?? 0}
                   color="text-muted-foreground"
                 />
-                <StatCard 
+                <StatCard
                   icon={<Target className="w-4 h-4" />}
-                  label="Average" 
-                  value={Math.round(analytics?.avg ?? 0)} 
+                  label="Average"
+                  value={Math.round(analytics?.avg ?? 0)}
                   color="text-xp"
                 />
-                <StatCard 
+                <StatCard
                   icon={<Calendar className="w-4 h-4" />}
-                  label="Entries" 
-                  value={entries.length} 
+                  label="Entries"
+                  value={entries.length}
                   color="text-foreground"
                 />
               </div>
@@ -248,14 +246,24 @@ export function TrackerAnalyticsModal({
                     <Flame className="w-4 h-4" />
                     <span className="text-xs font-medium">Current Streak</span>
                   </div>
-                  <div className="font-mono text-2xl font-bold">{streaks.current} <span className="text-sm font-normal text-muted-foreground">days</span></div>
+                  <div className="font-mono text-2xl font-bold">
+                    {streaks.current}{" "}
+                    <span className="text-sm font-normal text-muted-foreground">
+                      days
+                    </span>
+                  </div>
                 </div>
                 <div className="p-4 border rounded-xl bg-gradient-to-br from-commit/5 to-transparent">
                   <div className="flex items-center gap-2 text-commit mb-1">
                     <Flame className="w-4 h-4" />
                     <span className="text-xs font-medium">Longest Streak</span>
                   </div>
-                  <div className="font-mono text-2xl font-bold">{streaks.longest} <span className="text-sm font-normal text-muted-foreground">days</span></div>
+                  <div className="font-mono text-2xl font-bold">
+                    {streaks.longest}{" "}
+                    <span className="text-sm font-normal text-muted-foreground">
+                      days
+                    </span>
+                  </div>
                 </div>
               </div>
 
@@ -268,7 +276,7 @@ export function TrackerAnalyticsModal({
                 <ContributionHeatmap
                   data={heatmapGrid}
                   interactive
-                  onCellClick={date =>
+                  onCellClick={(date) =>
                     setSelectedDate(date === selectedDate ? null : date)
                   }
                 />
@@ -292,18 +300,25 @@ export function TrackerAnalyticsModal({
                   </p>
                 ) : (
                   <div className="space-y-1 max-h-56 overflow-y-auto">
-                    {entries.slice(0, 50).map(e => (
-                      <div key={e.id} className="flex justify-between text-sm py-2 px-3 hover:bg-surface-2 rounded-lg transition-colors">
+                    {entries.slice(0, 50).map((e) => (
+                      <div
+                        key={e.id}
+                        className="flex justify-between text-sm py-2 px-3 hover:bg-surface-2 rounded-lg transition-colors"
+                      >
                         <span className="font-mono text-muted-foreground">
-                          {format(new Date(e.timestamp), "MMM d, yyyy · HH:mm")}
+                          {format(
+                            new Date(e.timestamp),
+                            "MMM d, yyyy · HH:mm"
+                          )}
                         </span>
-                        <span className="font-mono font-semibold text-commit">+{e.value}</span>
+                        <span className="font-mono font-semibold text-commit">
+                          +{e.value}
+                        </span>
                       </div>
                     ))}
                   </div>
                 )}
               </div>
-
             </div>
           )}
         </ScrollArea>

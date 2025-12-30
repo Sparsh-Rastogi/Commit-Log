@@ -10,7 +10,7 @@ export interface Tracker {
   mode: TrackerMode;           // value | sum
   target?: number;
   threshold?: number;
-
+  target_type: string;
   entries: TrackerEntry[];
   displayMode: TrackerDisplay;
   status: 'active' | 'dead';

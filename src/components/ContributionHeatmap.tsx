@@ -83,7 +83,7 @@ export function ContributionHeatmap({ data, onCellClick, interactive = false }: 
                     key={`${weekIndex}-${dayIndex}`}
                     onClick={() => interactive && onCellClick?.(dateKey, level)}
                     className={cn(
-                      "w-[12px] h-[12px] rounded-[2px] transition-all duration-200",
+                      "w-[15px] h-[12px] rounded-[2px] transition-all duration-200",
                       levelColors[level] || levelColors[0],
                       interactive && "cursor-pointer hover:ring-2 hover:ring-accent hover:ring-offset-1 hover:ring-offset-background"
                     )}

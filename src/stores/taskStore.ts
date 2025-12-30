@@ -46,6 +46,7 @@ export const useTaskStore = create<TaskState>((set, get) => ({
   // 🔹 Create task
   createTask: async (taskData) => {
     // console.log("Creating task:", taskData);
+    // taskData.branchId = taskData.branchId;
     const task = await apiFetch<Task>("/tasks/", {
       method: "POST",
       
@@ -53,6 +54,7 @@ export const useTaskStore = create<TaskState>((set, get) => ({
     });
 
     set(state => ({ tasks: [...state.tasks, task] }));
+    // fetchTasks(taskData.branchId);
     return task;
   },
 

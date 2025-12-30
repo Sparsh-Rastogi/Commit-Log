@@ -82,6 +82,15 @@ export function TrackerCard({
 
   const displayValue = (() => {
     if (!analytics) return 0;
+    console.log(analytics);
+    return analytics.max ?? 0;
+    console.log(tracker);
+    if(tracker.target_type=="VALUE"){
+      return analytics.max??0;
+    }
+    else{
+      return analytics.avg??0;
+    }
     switch (tracker.displayMode) {
       case "sum":
         return analytics.max ?? 0;

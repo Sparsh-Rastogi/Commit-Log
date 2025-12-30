@@ -67,7 +67,7 @@ export const useTrackerStore = create<TrackerState>((set, get) => ({
       method: "POST",
       body: JSON.stringify({
         name: data.name,
-        branch: data.branchId,
+        branchId: data.branchId,
         // tracker_type: data.mode,
         target_type: data.target
           ? data.threshold

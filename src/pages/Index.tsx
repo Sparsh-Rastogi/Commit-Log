@@ -88,19 +88,16 @@ const Index = () => {
   /* =======================
      App Initialization
   ======================= */
-  // AUTH bootstrap - runs once
   useEffect(() => {
     checkAuth();
   }, [checkAuth]);
 
-  // BRANCHES bootstrap - runs once after auth
   useEffect(() => {
     if (!isAuthLoading) {
       fetchBranches();
     }
   }, [isAuthLoading, fetchBranches]);
 
-  // TASKS & TRACKERS - fetch when branch changes
   useEffect(() => {
     if (currentBranchId) {
       fetchTasks(currentBranchId);
@@ -108,10 +105,8 @@ const Index = () => {
     }
   }, [currentBranchId, fetchTasks, fetchTrackers]);
 
-  // Derive current branch from store
   const currentBranch = getCurrentBranch();
 
-  // Loading state
   const isInitialLoading = isAuthLoading || isBranchLoading || !currentBranch;
 
   if (isInitialLoading) {
@@ -129,8 +124,6 @@ const Index = () => {
      Handlers
   ======================= */
   const handleBranchSelect = (branchId: number | null) => {
-    // console.log("Selecting branch:", branchId);
-    console.log(branches);
     if (branchId) selectBranch(branchId);
   };
 
@@ -147,8 +140,9 @@ const Index = () => {
     setTrackerModalOpen(true);
   };
 
-  const handlePushEntry = (trackerId: number, value: number) => {
-    pushEntry(trackerId, value);
+  const handlePushEntry = async (trackerId: number, value: number) => {
+    await pushEntry(trackerId, value);
+    if (currentBranchId) await fetchTrackers(currentBranchId); // ⬅ re-fetch trackers
   };
 
   const handleCreateTask = async (
@@ -156,7 +150,7 @@ const Index = () => {
   ) => {
     if (!currentBranchId) return;
     await createTask({ ...taskData, branchId: currentBranchId });
-    fetchTasks(currentBranchId);
+    await fetchTasks(currentBranchId); // ⬅ re-fetch tasks
   };
 
   const handlePostponeTask = (taskId: number, newDate: Date) => {
@@ -177,10 +171,12 @@ const Index = () => {
   }) => {
     if (!currentBranchId) return;
     await createTracker({ ...data, branchId: currentBranchId });
+    await fetchTrackers(currentBranchId); // ⬅ re-fetch trackers after creation
   };
 
   const handleDeleteTracker = async (trackerId: number) => {
     await deleteTracker(trackerId);
+    if (currentBranchId) await fetchTrackers(currentBranchId); // maintain state sync
   };
 
   /* =======================
@@ -203,8 +199,7 @@ const Index = () => {
 
     try {
       const response = await pullBranch(currentBranchId);
-
-      await checkAuth(); // re-sync user from backend
+      await checkAuth();
 
       setPullConfirmModalOpen(false);
       setPullResult({
@@ -245,10 +240,10 @@ const Index = () => {
     ? { username: user.username, level: user.level, xp: user.xp }
     : { username: "Guest", level: 1, xp: 0 };
 
-  /* =======================
-     Calculate total tracker weight for percentage display
-  ======================= */
-  const totalTrackerWeight = trackers.reduce((sum, t) => sum + (t.weight || 0), 0);
+  const totalTrackerWeight = trackers.reduce(
+    (sum, t) => sum + (t.weight || 0),
+    0
+  );
 
   /* =======================
      Render
@@ -304,6 +299,7 @@ const Index = () => {
         tracker={selectedTracker}
         open={trackerModalOpen}
         onOpenChange={setTrackerModalOpen}
+        onPushEntry={handlePushEntry}
       />
 
       <PullCommitModal
